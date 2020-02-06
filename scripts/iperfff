@@ -3,11 +3,12 @@
 # https://github.com/Aniverse/aBox
 
 script_update=2020.02.06
-script_version=r10000
+script_version=r10001
 
 ########################################################################################################
 
 usage_guide() {
+bash <(wget -qO- https://github.com/Aniverse/aBox/raw/master/scripts/iperfff)
 s=/usr/local/bin/iperfff ; rm -f $s ; nano $s ; chmod 755 $s
 }
 
@@ -33,11 +34,11 @@ baihuangse=${white}${on_yellow}; bailanse=${white}${on_blue} ; bailvse=${white}$
 baiqingse=${white}${on_cyan}   ; baihongse=${white}${on_red} ; baizise=${white}${on_magenta}
 heibaise=${black}${on_white}   ; heihuangse=${on_yellow}${black}
 
-function _print() { printf "${normal}%s${normal}\n" "$@" ; }
-function _info() { printf "${cyan}➜ %s${normal}\n" "$@" ; }
-function _success() { printf "${green}✓ %s${normal}\n" "$@" ; }
-function _warning() { printf "${yellow}⚠ %s${normal}\n" "$@" ; }
-function _error() { printf "${red}✗ %s${normal}\n" "$@" ; }
+function _print() { printf "${bold}${normal}%s${normal}\n" "$@" ; }
+function _info() { printf "${bold}${cyan}➜ %s${normal}\n" "$@" ; }
+function _success() { printf "${bold}${green}✓ %s${normal}\n" "$@" ; }
+function _warning() { printf "${bold}${yellow}⚠ %s${normal}\n" "$@" ; }
+function _error() { printf "${bold}${red}✗ %s${normal}\n" "$@" ; }
 
 ########################################################################################################
 
@@ -91,13 +92,13 @@ check_iperf() {
 }
 
 iperf_test_while_true() {
-    local seconds=0
+    local seconds=20
     while true ; do
-        seconds=$(( $seconds + 1 ))
+        seconds=$(( $seconds - 1 ))
         echo -ne "[$seconds] "
         $do_iperf_cmd -c $server -i 1 -t $times -P $parallel $flags && break
-        if [ $seconds = 30 ]; then
-            _warn "该节点正忙或无法使用"
+        if [ $seconds = 0 ]; then
+            _error "该节点正忙或无法使用" ; echo
             return 1
         fi
         sleep 1
