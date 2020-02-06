@@ -1,0 +1,156 @@
+#!/bin/bash
+# Author: Aniverse
+# https://github.com/Aniverse/aBox
+
+script_update=2020.02.06
+script_version=r10109
+
+########################################################################################################
+
+usage_guide() {
+rm -f /usr/local/bin/flexgettt ; nano /usr/local/bin/flexgettt ; chmod 755 /usr/local/bin/flexgettt
+# split -b 65535000 -d -a 4 input ouptput_$(date "+%Y-%m-%d")
+# $(date "+%Y-%m-%d %H:%M")
+}
+
+########################################################################################################
+
+config=/root/.config/flexget
+log=/log/script/check_flexget.log
+log_bak_path=/log/script/flexgettt
+flexget_log=/root/.config/flexget/flexget.log
+flexget_cmd=/usr/local/bin/flexget
+
+user=$(whoami)
+S_dirrname="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+S_filename="$( basename $BASH_SOURCE )"
+S_Path="$S_dirrname/$S_filename"
+S_Path_sed="$(echo $S_Path | sed -e 's/\//\\\//g')"
+
+black='\033[0;30m'   ; red='\033[0;31m' ; green='\033[0;32m' ; yellow='\033[0;33m' ; blue='\033[0;34m'
+magenta='\033[0;35m' ; cyan='\033[0;36m'; white='\033[0;37m' ; normal='\033[0m'    ; bold='\033[1m'
+on_red='\033[41;37m' ; on_cyan='\033[46;37m' ; heihuangse='\033[43;30m'
+
+[[ ! -w "$log" ]] && { mkdir -p "$(dirname "$log")" ; touch "$log" ; chmod 666 "$log" ; }
+
+########################################################################################################
+
+lines() { printf "%-100s\n" "-" | sed 's/\s/-/g' ; }
+logs_rm_lock() { lines ; echo -e "$(date "+%Y-%m-%d %H:%M") ANIVERSE script DELETED $config/.config-lock" ; lines ; }
+logs_rm_lock_color() { echo -e "${on_red}${bold}$(date "+%Y-%m-%d %H:%M") ANIVERSE script DELETED $config/.config-lock${normal}" ; }
+logs_execute() { lines ; echo -e "${on_cyan}${bold}$(date "+%Y-%m-%d %H:%M") ANIVERSE script execute${normal}" ; lines ; }
+
+########################################################################################################
+
+OPTS=$(getopt -o nlcxt --long "normal,log,cron,learn,test,log-backup,log-clean" -- "$@")
+eval set -- "$OPTS"
+[ ! $? = 0 ] && { echo -e "Invalid option: $1" ; mode=usage ; }
+
+while true; do
+  case "$1" in
+    -n  | --normal    ) mode=normal     ; shift ;;
+    -l  | --log       ) mode=show_log   ; shift ;;
+    -c  | --cron      ) mode=add2cron   ; shift ;;
+    -x  | --learn     ) mode=fg_learn   ; shift ;;
+    -t  | --test      ) mode=fg_test    ; shift ;;
+    --log-backup      ) mode=log_bak    ; shift ;;
+    --log-clean       ) mode=log_clean  ; shift ;;
+#   -- ) shift; break ;;
+    *  ) break ;;
+  esac
+done
+
+[[ -z $mode ]] && mode=usage
+
+########################################################################################################
+
+#flexget_rm_lock() { 
+[[ -f $config/.config-lock ]] && {
+    rm -f $config/.config-lock 2>&1 >> $log
+    logs_rm_lock_color >> $log
+    logs_rm_lock >> $flexget_log
+}
+
+flexget_learn() { flexget execute --learn ; }
+flexget_test () { flexget  --test --loglevel debug execute ; }
+
+flexget_log() {
+    tail -500 $log
+    echo -e "${bold}\ngrep -C100 23:33 $log\ngrep --color=never -C100 'DELETED $config/.config-lock' $log\n${normal}"
+}
+
+log_backup_daily() {
+    mkdir -p $log_bak_path
+    cp -f /log/script/check_flexget.log $log_bak_path/$(date "+%Y-%m-%d").log
+    echo -n > /log/script/check_flexget.log
+}
+
+log_clean() {
+    rm -rf $log_bak_path/*
+    echo -n > /log/script/check_flexget.log
+}
+
+flexget_execute() {
+    logs_execute >> $log
+    /usr/bin/time -f "Time used: %e" -a -o $log "$flexget_cmd" execute --no-cache 2>&1 >> $log
+}
+
+flexget_add2cron() {
+    echo
+    crontab -u $user -l 2>1 | grep -q "$S_Path" || NoCron=1
+    
+    if [[ $NoCron == 1 ]]; then
+        echo -ne "${yellow}${bold}How many minutes of intervals would you like?${normal} " ; read -e interval
+        if [[ $interval -gt 0 ]] ; then
+            cronline="*/$interval * * * * $S_Path -n"
+            cronline2="0 0 * * * $S_Path --log-backup"
+            (crontab -u $user -l ; echo "$cronline" ) | crontab -u $user -
+            (crontab -u $user -l ; echo "$cronline2" ) | crontab -u $user -
+            echo -e "\n${green}${bold}Flexget crontab enabled${normal}\n"
+        else
+            echo -e "\n${bold}Nothing to do, exit${normal}\n"
+        fi
+    else
+        interval2=$(crontab -u $user -l | grep -a "$S_Path" | grep -v "log-backup" | awk '{print $1}' | grep -oE "[0-9]+")
+        echo -e "${bold}Flexget RSS enabled, current interval is  ${heihuangse}$interval2${jiacu} minute(s)${normal}"
+        echo -e "${bold}Press enter to do nothing, 0 to disable Flexget, or other numbers to be wanted interval${normal}"
+        echo -ne "${yellow}${bold}How many minutes of intervals would you like?${normal} " ; read -e interval
+        if [[ $interval -gt 0 ]] ; then
+            ( crontab -u $user -l | sed "/.*$S_Path_sed/"d ) | crontab -u $user -
+            cronline="*/$interval * * * * $S_Path"
+            (crontab -u $user -l ; echo "$cronline" ) | crontab -u $user -
+            echo -e "\n${green}${bold}Changed interval to $interval${normal}\n"
+        elif [[ $interval = 0 ]] ; then
+            ( crontab -u $user -l | sed "/.*$S_Path_sed/"d ) | crontab -u $user -
+            echo -e "\n${green}${bold}Disabled Flexget cron${normal}\n"
+        else
+            echo -e "\n${bold}Nothing to do, exit${normal}\n"
+        fi
+    fi
+}
+
+show_usage() {
+    echo "
+flexgettt $script_update $script_version
+
+-n              flexget execute
+-c              Enable or Disable flexget cron
+-l              tail -500 $log
+-x              flexget execute --learn
+-t              flexget --test --loglevel debug execute
+--log-clean     rm -rf $log_bak_path/* && echo -n > /log/script/check_flexget.log
+--log-backup    cp -f /log/script/check_flexget.log $log_bak_path/$(date "+%Y-%m-%d").log
+                echo -n > /log/script/check_flexget.log
+"
+}
+
+case $mode in
+    normal    ) flexget_execute  ;;
+    show_log  ) flexget_log      ;;
+    add2cron  ) flexget_add2cron ;;
+    fg_test   ) flexget_test     ;;
+    fg_learn  ) flexget_learn    ;;
+    log_bak   ) log_backup_daily ;;
+    log_clean ) log_clean    ;;
+    usage     ) show_usage   ;;
+esac

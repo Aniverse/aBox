@@ -1,0 +1,217 @@
+#!/bin/bash
+# Author: Aniverse
+# https://github.com/Aniverse/aBox
+####################################################################################################
+script_update=2020.02.06
+script_version=r20013
+####################################################################################################
+usage_guide() {
+rm -f /usr/local/bin/r8168 ; nano /usr/local/bin/r8168 ; chmod 755 /usr/local/bin/r8168
+}
+
+black=$(tput setaf 0)   ; red=$(tput setaf 1)          ; green=$(tput setaf 2)   ; yellow=$(tput setaf 3);  bold=$(tput bold)
+blue=$(tput setaf 4)    ; magenta=$(tput setaf 5)      ; cyan=$(tput setaf 6)    ; white=$(tput setaf 7) ;  normal=$(tput sgr0)
+on_black=$(tput setab 0); on_red=$(tput setab 1)       ; on_green=$(tput setab 2); on_yellow=$(tput setab 3)
+on_blue=$(tput setab 4) ; on_magenta=$(tput setab 5)   ; on_cyan=$(tput setab 6) ; on_white=$(tput setab 7)
+shanshuo=$(tput blink)  ; wuguangbiao=$(tput civis)    ; guangbiao=$(tput cnorm) ; jiacu=${normal}${bold}
+underline=$(tput smul)  ; reset_underline=$(tput rmul) ; dim=$(tput dim)
+standout=$(tput smso)   ; reset_standout=$(tput rmso)  ; title=${standout}
+baihuangse=${white}${on_yellow}; bailanse=${white}${on_blue} ; bailvse=${white}${on_green}
+baiqingse=${white}${on_cyan}   ; baihongse=${white}${on_red} ; baizise=${white}${on_magenta}
+heibaise=${black}${on_white}   ; heihuangse=${on_yellow}${black}
+
+####################################################################################################
+
+
+
+CODENAME=$(cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"\|(\|)\|[0-9.,]\|version\|lts//g' | awk '{print $2}')
+kernel=$(uname -r)
+kernelvvv=$(uname -r | grep -oE [0-9.-]+ | head -1)
+KNA=$(awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release)
+KernelBit=$(getconf LONG_BIT)
+
+####################################################################################################
+
+function check_apps() {
+command -v ifconfig  | grep -q ifcon  || apt-get install -y net-tools
+command -v ethtool   | grep -q ethtoo || apt-get install -y ethtool
+command -v iperf     | grep -q iperf  || apt-get install -y iperf
+command -v iperf3    | grep -q iperf3 || apt-get install -y iperf3
+wangka=$(ifconfig -a | grep -B 1 $(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}') | head -n1 | awk '{print $1}' | sed "s/:$//")
+}
+
+function show_headers() {
+echo -e "${bold}以下是系统里的 kernel 和 headers 情况${yellow}"
+echo $kernel
+dpkg -l | grep linux-headers | grep $kernelvvv | awk '{print $2}'
+echo -e "${normal}"
+}
+
+function show_iface() {
+echo -e "${bold}以下是系统里的网卡情况${yellow}"
+echo $wangka ; echo
+ethtool -i $wangka
+echo -e "${normal}"
+}
+
+function kill_ruisu() {
+[[ -f /appex/bin/serverSpeeder.sh ]] && { /appex/bin/serverSpeeder.sh  stop ; /appex/bin/serverSpeeder.sh  status ; ruisu=y ; }
+[[ -f /appex/bin/lotServer.sh     ]] && { /appex/bin/lotServer.sh      stop ; /appex/bin/lotServer.sh      status ; ruisu=y ; }
+[[ -z $ruisu ]] && echo -e "\n${red}No ruisu found${normal}\n" || echo -e "\n${red}Stopped ruisu${normal}\n"
+}
+
+function ask_iperf() {
+echo
+read -ep "${bold}${red}Would you like to do iperf test? [Y/n]${normal} " responce
+case $responce in
+    [yY] | [yY][Ee][Ss] | "") do_iperf ;;
+    [nN] | [nN][Oo]         ) sleep 0  ;;
+    *                       ) do_iperf ;;
+esac
+}
+
+function do_iperf() {
+echo -e "\n${bold}${cyan}iperf -c iperf.ovh.net -i 1 -t 4${normal}"
+iperf -c iperf.ovh.net -i 1 -t 4
+echo -e "\n${bold}${cyan}iperf3 -c ping-ams1.online.net -p 5203 -t 4${normal}"
+iperf3 -c ping-ams1.online.net -p 5203 -t 4
+echo -e "\n${bold}${cyan}iperf3 -c bouygues.testdebit.info -p 5203 -4 -t 4${normal}"
+iperf3 -c bouygues.testdebit.info -p 5203 -4 -t 4
+echo -e "\n${bold}${cyan}DONE${normal}\n"
+}
+
+####################################################################################################
+
+function r8168_driver() {
+# read -ep "${bold}确定 headers 已经安装、内核已安装并重启过了？${normal}"
+for app in firmware-realtek dkms ; do
+    dpkg -l | grep $app -q && apt-get purge -y $app
+done
+
+apt-get update && apt-get install build-essential libelf-dev -y ; echo
+wget -O 10086 https://github.com/Aniverse/inexistence/raw/files/firmware/r8168-8.046.00.tar.bz2
+tar xfvj 10086 ; rm -rf 10086 ; cd r8168-8.046.00
+{ ./autorun.sh || modprobe r8169 ; } 2>&1 | tee /log/r8168.log 
+cd .. ; rm -rf r8168-8.046.00
+
+[[ $reboot == y ]] && { reboot -f ; init 6 ; }
+show_iface
+ask_iperf
+}
+
+####################################################################################################
+
+function r8168_dkms() {
+for app in firmware-realtek dkms ; do
+    dpkg -l | grep $app -q && apt-get purge -y $app
+done
+
+apt-get update && apt-get install -y dkms
+
+[[ $CODENAME == bionic  ]] && export headers_list="$(apt-cache search linux-image-4.15.0.*generic | sort | tail -1 | awk '{print $1}') $(apt-cache search linux-headers-4.15.0.*generic | sort | tail -1 | awk '{print $1}')"
+[[ $CODENAME == xenial  ]] && export headers_list="$(apt-cache search linux-image-4.4.0.*generic | sort | tail -1 | awk '{print $1}') $(apt-cache search linux-headers-4.4.0.*generic | sort | tail -1 | awk '{print $1}')"
+[[ $CODENAME == jessie  ]] && export headers_list="$(apt-cache search linux-image-3.16.0.*amd64 | grep -v rt-amd64 | sort | tail -1 | awk '{print $1}') $(apt-cache search linux-headers-3.16.0.*amd64 | grep -v rt-amd64 | sort | tail -1 | awk '{print $1}')"
+[[ $CODENAME == stretch ]] && export headers_list="$(apt-cache search linux-image-4.9.0.*amd64 | grep -v rt-amd64 | sort | tail -1 | awk '{print $1}') $(apt-cache search linux-headers-4.9.0.*amd64 | grep -v rt-amd64 | sort | tail -1 | awk '{print $1}')"
+
+apt-get purge -y $headers_list
+wget https://github.com/Aniverse/inexistence/raw/files/firmware/r8168-dkms_8.040.00-1_all.deb -O r8168-dkms_8.040.00-1_all.deb
+dpkg -i r8168-dkms_8.040.00-1_all.deb
+rm -f r8168-dkms_8.040.00-1_all.deb
+
+[[ $reboot == y ]] && { reboot -f ; init 6 ; }
+show_iface
+ask_iperf
+}
+
+
+apt install r8168-dkms
+
+
+
+
+
+
+####################################################################################################
+
+
+
+check_apps
+kill_ruisu
+show_iface
+show_headers
+
+echo -e "${green}1)${normal} Compile r8168 driver"
+echo -e "${green}2)${normal} Install r8168 via dkms"
+echo -e "${green}3)${normal} Compile r8168 driver and then reboot"
+echo -e "${green}4)${normal} Install r8168 via dkms and then reboot"
+echo -e "${green}5)${normal} Do iperf test"
+read -ep "${bold}${yellow}Which method would you like? ${normal}" responce
+case $responce in
+    1 ) r8168_driver ;;
+    2 ) r8168_dkms ;;
+    3 ) reboot=y ; r8168_driver ;;
+    4 ) reboot=y ; r8168_dkms ;;
+    5 ) do_iperf ;;
+    * ) exit 1 ;;
+esac
+
+
+
+
+
+
+
+function Notes() {
+############ Debian 9 ############
+dh-python distro-info-data file libmagic-mgc libmagic1 libmpdec2 libpython3-stdlib libpython3.5-minimal
+libpython3.5-stdlib linux-compiler-gcc-6-x86 linux-headers-4.9.0-8-amd64 linux-headers-4.9.0-8-common
+linux-headers-amd64 linux-kbuild-4.9 lsb-release mime-support python3 python3-minimal python3.5 python3.5-minimal
+############
+(Reading database ... 44527 files and directories currently installed.)
+Preparing to unpack r8168-dkms_8.040.00-1_all.deb ...
+
+------------------------------
+Deleting module version: 8.040.00
+completely from the DKMS tree.
+------------------------------
+Done.
+Unpacking r8168-dkms 8.040.00-1 over 8.040.00-1 ...
+Setting up r8168-dkms 8.040.00-1 ...
+Loading new r8168-8.040.00 DKMS files...
+Building for 3.16.0-4-amd64
+Building initial module for 3.16.0-4-amd64
+Done.
+
+r8168:
+Running module version sanity check.
+ - Original module
+   - No original module exists within this kernel
+ - Installation
+   - Installing to /lib/modules/3.16.0-4-amd64/updates/dkms/
+
+depmod....
+
+Backing up initrd.img-3.16.0-4-amd64 to /boot/initrd.img-3.16.0-4-amd64.old-dkms
+Making new initrd.img-3.16.0-4-amd64
+(If next boot fails, revert to initrd.img-3.16.0-4-amd64.old-dkms image)
+update-initramfs....
+
+DKMS: install completed.
+########################
+Check old driver and unload it.
+rmmod r8169
+Build the module and install
+At main.c:160:
+- SSL error:02001002:system library:fopen:No such file or directory: ../crypto/bio/bss_file.c:74
+- SSL error:2006D080:BIO routines:BIO_new_file:no such file: ../crypto/bio/bss_file.c:81
+sign-file: certs/signing_key.pem: No such file or directory
+Warning: modules_install: missing 'System.map' file. Skipping depmod.
+Backup r8169.ko
+rename r8169.ko to r8169.bak
+DEPMOD 4.19.51-xanmod26
+load module r8168
+Updating initramfs. Please wait.
+update-initramfs: Generating /boot/initrd.img-4.19.51-xanmod26
+Completed.
+}
+

@@ -1,0 +1,182 @@
+#!/bin/bash
+# Author: Aniverse
+# https://github.com/Aniverse/aBox
+
+script_update=2020.02.06
+script_version=r10000
+
+########################################################################################################
+
+usage_guide() {
+s=/usr/local/bin/iperfff ; rm -f $s ; nano $s ; chmod 755 $s
+}
+
+# https://iperf.fr/iperf-servers.php
+# https://iperf.cc/
+
+########################################################################################################
+
+iperf_cmd=$(which iperf)
+iperf3_cmd=$(which iperf3)
+times=10
+parallel=1
+flags=""
+
+black=$(tput setaf 0)   ; red=$(tput setaf 1)          ; green=$(tput setaf 2)   ; yellow=$(tput setaf 3);  bold=$(tput bold)
+blue=$(tput setaf 4)    ; magenta=$(tput setaf 5)      ; cyan=$(tput setaf 6)    ; white=$(tput setaf 7) ;  normal=$(tput sgr0)
+on_black=$(tput setab 0); on_red=$(tput setab 1)       ; on_green=$(tput setab 2); on_yellow=$(tput setab 3)
+on_blue=$(tput setab 4) ; on_magenta=$(tput setab 5)   ; on_cyan=$(tput setab 6) ; on_white=$(tput setab 7)
+shanshuo=$(tput blink)  ; wuguangbiao=$(tput civis)    ; guangbiao=$(tput cnorm) ; jiacu=${normal}${bold}
+underline=$(tput smul)  ; reset_underline=$(tput rmul) ; dim=$(tput dim)
+standout=$(tput smso)   ; reset_standout=$(tput rmso)  ; title=${standout}
+baihuangse=${white}${on_yellow}; bailanse=${white}${on_blue} ; bailvse=${white}${on_green}
+baiqingse=${white}${on_cyan}   ; baihongse=${white}${on_red} ; baizise=${white}${on_magenta}
+heibaise=${black}${on_white}   ; heihuangse=${on_yellow}${black}
+
+function _print() { printf "${normal}%s${normal}\n" "$@" ; }
+function _info() { printf "${cyan}➜ %s${normal}\n" "$@" ; }
+function _success() { printf "${green}✓ %s${normal}\n" "$@" ; }
+function _warning() { printf "${yellow}⚠ %s${normal}\n" "$@" ; }
+function _error() { printf "${red}✗ %s${normal}\n" "$@" ; }
+
+########################################################################################################
+
+
+root_install_iperf() {
+    if [[ $(apt-get 2>&1 > /dev/null) ]]; then
+        DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" update
+        DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install iperf iperf3
+    elif [[ $(yum 2>&1 > /dev/null) ]]; then
+        yum update
+	    yum -y install iperf
+        yum -y install iperf3
+    fi
+}
+
+build_iperf() {
+    mkdir -p $HOME/.local $HOME/.tmp
+    cd $HOME/.tmp
+    wget https://github.com/esnet/iperf/archive/3.7.tar.gz
+    tar zxf 3.7.tar.gz
+    cd iperf-3.7
+    ./configure     --prefix=$HOME/.local
+    make -j$(nproc)
+    make install
+    cd ..
+    
+    wget https://iperf.fr/download/source/iperf-2.0.9-source.tar.gz
+    tar zxf iperf-2.0.9-source.tar.gz
+    cd iperf-2.0.9
+    ./configure     --prefix=$HOME/.local
+    make -j$(nproc)
+    make install
+    cd $HOME
+    rm -rf $HOME/.tmp/iperf*
+
+    iperf_cmd="$HOME/.local/bin/iperf"
+    iperf3_cmd="$HOME/.local/bin/iperf3"
+}
+
+install_iperf() {
+    if [[ $EUID == 0 ]]; then
+        root_install_iperf
+    else
+        build_iperf
+    fi
+}
+
+check_iperf() {
+    [[ -x $iperf_cmd  ]] || { _warning "No iperf found!"  && no_iperf=1 ; }
+    [[ -x $iperf3_cmd ]] || { _warning "No iperf3 found!" && no_iperf=1 ; }
+}
+
+iperf_test_while_true() {
+    local seconds=0
+    while true ; do
+        seconds=$(( $seconds + 1 ))
+        echo -ne "[$seconds] "
+        $do_iperf_cmd -c $server -i 1 -t $times -P $parallel $flags && break
+        if [ $seconds = 30 ]; then
+            _warn "该节点正忙或无法使用"
+            return 1
+        fi
+        sleep 1
+    done
+}
+
+function iperf_menu() {
+    if [[ $mode == iperf ]]; then
+        do_iperf_cmd=$iperf_cmd
+    elif [[ $mode == iperf3 ]]; then
+        do_iperf_cmd=$iperf3_cmd
+    fi
+    clear
+    cat << EOF
+${bold}${on_magenta}iperf 节点${jiacu}
+${green}<11>${cyan} 法国 Online        ${blue}ping.online.net${jiacu} 
+${green}<12>${cyan} 法国 OVH           ${blue}iperf.ovh.net${jiacu} 
+${green}<13>${cyan} 加拿大 OVH         ${blue}bhs.proof.ovh.net${jiacu} 
+${green}<14>${cyan} 荷兰 NFOrce        ${blue}mirror.nforce.com${jiacu} 
+${green}<15>${cyan} 荷兰 Serverius     ${blue}speedtest.serverius.net${jiacu} 
+${green}<16>${cyan} 美国 ACD           ${blue}iperf.acd.net${jiacu} 
+
+${on_magenta}iperf3 节点${jiacu} 
+${green}<21>${cyan} 法国 Bouygues      ${blue}bouygues.testdebit.info${jiacu} 
+${green}<22>${cyan} 法国 Online        ${blue}ping.online.net${jiacu} 
+${green}<23>${cyan} 荷兰 Online        ${blue}ping-ams1.online.net${jiacu} 
+${green}<24>${cyan} 荷兰 WorldStream   ${blue}iperf.worldstream.nl${jiacu} 
+${green}<25>${cyan} 荷兰 YISP          ${blue}speedtest.yisp.nl${jiacu} 
+${green}<26>${cyan} 德国 wilhelm.tel   ${blue}speedtest.wtnet.de${jiacu} 
+${green}<27>${cyan} 美国 HE            ${blue}iperf.he.net${jiacu} 
+
+${magenta}<0>${jiacu} iperf 程序路径：${yellow}$do_iperf_cmd${jiacu}
+${magenta}<1>${jiacu} 当前选择的服务器：${yellow}$server${jiacu}
+${magenta}<2>${jiacu} 测试时长：${yellow}$times ${jiacu}秒（每秒一次）
+${magenta}<3>${jiacu} 线程数：${yellow}$parallel${jiacu}
+${magenta}<4>${jiacu} 其他参数：${yellow}$flags ${jiacu}（不懂的话就不用改）
+
+${red}<9>${jiacu} 退出脚本
+
+测试命令：${heihuangse}  $do_iperf_cmd -c $server -i 1 -t $times -P $parallel $flags ${normal}
+
+EOF
+    read -ep "${bold}输入对应的数值进行修改，敲回车开始测试${blue}  " response ; echo "${normal}"
+    case $response in
+        11) mode=iperf  ; server=ping.online.net ; iperf_menu ;;
+        12) mode=iperf  ; server=iperf.ovh.net ; iperf_menu ;;
+        13) mode=iperf  ; server=bhs.proof.ovh.net ; iperf_menu ;;
+        14) mode=iperf  ; server=mirror.nforce.com ; iperf_menu ;;
+        15) mode=iperf  ; server=speedtest.serverius.net ; iperf_menu ;;
+        16) mode=iperf  ; server=iperf.acd.net ; iperf_menu ;;
+        21) mode=iperf3 ; server=bouygues.testdebit.info ; iperf_menu ;;
+        22) mode=iperf3 ; server=ping.online.net ; iperf_menu ;;
+        23) mode=iperf3 ; server=ping-ams1.online.net ; iperf_menu ;;
+        24) mode=iperf3 ; server=iperf.worldstream.nl ; iperf_menu ;;
+        25) mode=iperf3 ; server=speedtest.yisp.nl ; iperf_menu ;;
+        26) mode=iperf3 ; server=speedtest.wtnet.de ; iperf_menu ;;
+        27) mode=iperf3 ; server=iperf.he.net ; iperf_menu ;;
+         0) read -ep "${bold}用哪个程序？${blue}" do_iperf_cmd ; echo -n "${normal}" ; iperf_menu ;;
+         1) read -ep "${bold}自定义节点：${blue}" server       ; echo -n "${normal}" ; iperf_menu ;;
+         2) read -ep "${bold}测试多少秒？${blue}" times        ; echo -n "${normal}" ; iperf_menu ;;
+         3) read -ep "${bold}用几个线程？${blue}" parallel     ; echo -n "${normal}" ; iperf_menu ;;
+         4) read -ep "${bold}输入要用的参数？${blue}" flags    ; echo -n "${normal}" ; iperf_menu ;;
+         9) exit ;;
+         *) [[ -z $server || -z $do_iperf_cmd ]] && { _error "未指定服务器或 iperf 程序路径，请重新运行脚本并指定！" ;echo;exit 1; } ;;
+    esac
+}
+
+########################################################################
+
+check_iperf
+if [[ $no_iperf == 1 ]]; then
+    _info "Now trying to install iperf and iperf3 ..."
+    install_iperf
+fi
+check_iperf
+if [[ $no_iperf == 1 ]]; then
+    _error "No executable iperf found, exiting ..."
+    exit 1
+fi
+
+iperf_menu
+iperf_test_while_true

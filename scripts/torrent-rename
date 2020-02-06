@@ -1,0 +1,94 @@
+#!/bin/bash
+# Author: Aniverse
+# https://github.com/Aniverse/aBox
+#########################################################################################################
+script_update=2020.02.06
+script_version=r11006
+
+usage_guide() {
+s=/usr/local/bin/torrent-rename ; rm -f $s ; nano $s ; chmod 755 $s
+}
+
+# 以后不用 transmission-show 了……现在的大小换算不准确
+#########################################################################################################
+
+[[ $1 == -d ]] && debug=1
+[[ $1 == -p ]] && show_pieces=1
+tb_ratio=0.909494
+gb_ratio=0.931322
+mb_ratio=0.953674
+
+command -v transmission-show > /dev/null || { echo -e "Error: No transmission-show" ; exit 1 ; }
+command -v bc                > /dev/null || { echo -e "Error: No bc"                ; exit 1 ; }
+
+#########################################################################################################
+
+function edit_size() {
+    if   echo $size | grep -qi KB ; then
+        size_unit=KB
+        size_num=$(echo $size | sed "s/$size_unit//")
+        size_num=$(echo "scale=2 ; $size_num*1000/1024" | bc)
+        size=$(echo ${size_num}${size_unit})
+    elif echo $size | grep -qi MB ; then
+        size_unit=MB
+        size_num=$(echo $size | sed "s/$size_unit//")
+        eval size_num=$(echo "scale=2 ; $size_num*1000/1024*1000/1024" | bc)
+        size=$(echo ${size_num}${size_unit})
+    elif echo $size | grep -qi GB ; then
+        size_unit=GB
+        size_num=$(echo $size | sed "s/$size_unit//")
+        eval size_num=$(echo "scale=2 ; $size_num*1000/1024*1000/1024*1000/1024" | bc)
+        size=$(echo ${size_num}${size_unit})
+    elif echo $size | grep -qi TB ; then
+        size_unit=TB
+        size_num=$(echo $size | sed "s/$size_unit//")
+        eval size_num=$(echo "scale=2 ; $size_num*1000/1024*1000/1024*1000/1024*1000/1024" | bc)
+        size=$(echo ${size_num}${size_unit})
+    fi
+}
+
+function edit_trackers() {
+    tracker=$(echo $tracker | sed 's/.org//')
+    tracker=$(echo $tracker | sed 's/.net//')
+    tracker=$(echo $tracker | sed 's/.cn//')
+    tracker=$(echo $tracker | sed 's/.com//')
+    tracker=$(echo $tracker | sed 's/.me//')
+    tracker=$(echo $tracker | sed 's/.cc//')
+    tracker=$(echo $tracker | sed 's/.xyz//')
+    tracker=$(echo $tracker | sed 's/tracker.//')
+    tracker=$(echo $tracker | sed 's/announce.//')
+    tracker=$(echo $tracker | sed 's/a.//')
+    echo $tracker | grep -q world-in-hd            && tracker=WiHD
+    echo $tracker | grep -q "landof.tv"            && tracker=BTN
+    echo $tracker | grep -q "stackoverflow.tech"   && tracker=IPT
+    echo $tracker | grep -q "flacsfor.me"          && tracker=Red
+    echo $tracker | grep -q "moose.awesome-hd.me"  && tracker=AHD
+    echo $tracker | grep -q "hdts-announce"        && tracker=HDTs
+    echo $tracker | grep -q "seedsfor.me"          && tracker=T
+    echo $tracker | grep -qE ":[0-9]+"  && tracker=$(echo $tracker | sed "s/:[0-9]\{1,5\}//")
+}
+
+#########################################################################################################
+
+[ -f tmp.ti.txt ] && rm -f tmp.ti.txt
+mkdir -p renamed ; echo
+
+for file in $PWD/*.torrent; do
+    [[ $debug == 1 ]] && echo $file > tmp.ti.txt
+    transmission-show "$file" >> tmp.ti.txt
+    name=$(cat tmp.ti.txt | grep '  Name' | grep -Po '.*Name: \K.*')
+    [[ $debug == 1 ]] && echo $name
+    tracker=$(cat tmp.ti.txt | grep -v Comment | grep http | head -1 | grep -Po '\/\/(.*?)\/' | grep -Po '[^\/]+(?=\/)')
+    [[ $debug == 1 ]] && echo $tracker
+    size=$(cat tmp.ti.txt | grep "Total Size" | awk '{print $(NF-1),$NF}' | sed 's/ //')
+    edit_size
+    piece=$(cat tmp.ti.txt | grep "Piece Count" | awk '{print $NF}')
+    psize=$(cat tmp.ti.txt | grep "Piece Size" | awk '{print $(NF-1),$NF}' | sed 's/ //')
+    edit_trackers
+    filename="[${tracker}][$size] $name.torrent"
+    [[ $show_pieces == 1 ]] && filename="[${tracker}] $name [$psize x $piece = $size].torrent"
+    [[ $debug == 1 ]] && echo "$PWD/renamed/$filename"
+    cp "$file" "${PWD}/renamed/${filename}"
+    echo -e "$(tput bold)$(tput setaf 3)Origin: $(tput sgr0)$(tput smul)$(basename "$file")$(tput rmul)\n$(tput bold)$(tput setaf 3)Rename: $(tput sgr0)$filename\n"
+    [[ -z $debug ]] && rm -f tmp.ti.txt
+done
