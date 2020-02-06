@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/aBox
 
 script_update=2020.02.06
-script_version=r10001
+script_version=r10002
 
 ########################################################################################################
 
@@ -87,6 +87,7 @@ install_iperf() {
 }
 
 check_iperf() {
+    no_iperf=0
     [[ -x $iperf_cmd  ]] || { _warning "No iperf found!"  && no_iperf=1 ; }
     [[ -x $iperf3_cmd ]] || { _warning "No iperf3 found!" && no_iperf=1 ; }
 }
