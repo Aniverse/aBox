@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/aBox
 
 script_update=2020.02.06
-script_version=r10002
+script_version=r10003
 
 ########################################################################################################
 
@@ -49,14 +49,14 @@ root_install_iperf() {
         DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install iperf iperf3
     elif [[ $(yum 2>&1 > /dev/null) ]]; then
         yum update
-	    yum -y install iperf
+        yum -y install iperf
         yum -y install iperf3
     fi
 }
 
 build_iperf() {
-    mkdir -p $HOME/.local $HOME/.tmp
-    cd $HOME/.tmp
+    mkdir -p $HOME/.local
+    cd $HOME
     wget https://github.com/esnet/iperf/archive/3.7.tar.gz
     tar zxf 3.7.tar.gz
     cd iperf-3.7
@@ -72,7 +72,7 @@ build_iperf() {
     make -j$(nproc)
     make install
     cd $HOME
-    rm -rf $HOME/.tmp/iperf*
+    rm -rf $HOME/iperf*
 
     iperf_cmd="$HOME/.local/bin/iperf"
     iperf3_cmd="$HOME/.local/bin/iperf3"
@@ -144,26 +144,26 @@ ${red}<9>${jiacu} 退出脚本
 EOF
     read -ep "${bold}输入对应的数值进行修改，敲回车开始测试${blue}  " response ; echo "${normal}"
     case $response in
-        11) mode=iperf  ; server=ping.online.net ; iperf_menu ;;
-        12) mode=iperf  ; server=iperf.ovh.net ; iperf_menu ;;
-        13) mode=iperf  ; server=bhs.proof.ovh.net ; iperf_menu ;;
-        14) mode=iperf  ; server=mirror.nforce.com ; iperf_menu ;;
+        11) mode=iperf  ; server=ping.online.net         ; iperf_menu ;;
+        12) mode=iperf  ; server=iperf.ovh.net           ; iperf_menu ;;
+        13) mode=iperf  ; server=bhs.proof.ovh.net       ; iperf_menu ;;
+        14) mode=iperf  ; server=mirror.nforce.com       ; iperf_menu ;;
         15) mode=iperf  ; server=speedtest.serverius.net ; iperf_menu ;;
-        16) mode=iperf  ; server=iperf.acd.net ; iperf_menu ;;
+        16) mode=iperf  ; server=iperf.acd.net           ; iperf_menu ;;
         21) mode=iperf3 ; server=bouygues.testdebit.info ; iperf_menu ;;
-        22) mode=iperf3 ; server=ping.online.net ; iperf_menu ;;
-        23) mode=iperf3 ; server=ping-ams1.online.net ; iperf_menu ;;
-        24) mode=iperf3 ; server=iperf.worldstream.nl ; iperf_menu ;;
-        25) mode=iperf3 ; server=speedtest.yisp.nl ; iperf_menu ;;
-        26) mode=iperf3 ; server=speedtest.wtnet.de ; iperf_menu ;;
-        27) mode=iperf3 ; server=iperf.he.net ; iperf_menu ;;
+        22) mode=iperf3 ; server=ping.online.net         ; iperf_menu ;;
+        23) mode=iperf3 ; server=ping-ams1.online.net    ; iperf_menu ;;
+        24) mode=iperf3 ; server=iperf.worldstream.nl    ; iperf_menu ;;
+        25) mode=iperf3 ; server=speedtest.yisp.nl       ; iperf_menu ;;
+        26) mode=iperf3 ; server=speedtest.wtnet.de      ; iperf_menu ;;
+        27) mode=iperf3 ; server=iperf.he.net            ; iperf_menu ;;
          0) read -ep "${bold}用哪个程序？${blue}" do_iperf_cmd ; echo -n "${normal}" ; iperf_menu ;;
          1) read -ep "${bold}自定义节点：${blue}" server       ; echo -n "${normal}" ; iperf_menu ;;
          2) read -ep "${bold}测试多少秒？${blue}" times        ; echo -n "${normal}" ; iperf_menu ;;
          3) read -ep "${bold}用几个线程？${blue}" parallel     ; echo -n "${normal}" ; iperf_menu ;;
          4) read -ep "${bold}输入要用的参数？${blue}" flags    ; echo -n "${normal}" ; iperf_menu ;;
          9) exit ;;
-         *) [[ -z $server || -z $do_iperf_cmd ]] && { _error "未指定服务器或 iperf 程序路径，请重新运行脚本并指定！" ;echo;exit 1; } ;;
+         *) [[ -z $server || -z $do_iperf_cmd ]] && { _error "未指定服务器或 iperf 程序路径，请重新运行脚本并指定！" ; echo ; exit 1; } ;;
     esac
 }
 
