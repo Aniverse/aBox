@@ -1,13 +1,20 @@
 #!/bin/bash
 # Author: Aniverse
 # https://github.com/Aniverse/aBox
+
 ####################################################################################################
-script_update=2020.02.06
-script_version=r20013
+
+script_update=2020.02.07
+script_version=r20014
+
 ####################################################################################################
 usage_guide() {
-rm -f /usr/local/bin/r8168 ; nano /usr/local/bin/r8168 ; chmod 755 /usr/local/bin/r8168
+bash <(wget -qO- https://github.com/Aniverse/aBox/raw/master/scripts/r8168)
+s=/usr/local/bin/r8168 ; rm -f $s ; nano $s ; chmod 755 $s
+# apt-get install r8168-dkms
 }
+
+####################################################################################################
 
 black=$(tput setaf 0)   ; red=$(tput setaf 1)          ; green=$(tput setaf 2)   ; yellow=$(tput setaf 3);  bold=$(tput bold)
 blue=$(tput setaf 4)    ; magenta=$(tput setaf 5)      ; cyan=$(tput setaf 6)    ; white=$(tput setaf 7) ;  normal=$(tput sgr0)
@@ -21,8 +28,6 @@ baiqingse=${white}${on_cyan}   ; baihongse=${white}${on_red} ; baizise=${white}$
 heibaise=${black}${on_white}   ; heihuangse=${on_yellow}${black}
 
 ####################################################################################################
-
-
 
 CODENAME=$(cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"\|(\|)\|[0-9.,]\|version\|lts//g' | awk '{print $2}')
 kernel=$(uname -r)
@@ -89,7 +94,7 @@ for app in firmware-realtek dkms ; do
 done
 
 apt-get update && apt-get install build-essential libelf-dev -y ; echo
-wget -O 10086 https://github.com/Aniverse/inexistence/raw/files/firmware/r8168-8.046.00.tar.bz2
+wget -O 10086 https://sourceforge.net/projects/aboxx/files/r8168/r8168-8.046.00.tar.bz2/download
 tar xfvj 10086 ; rm -rf 10086 ; cd r8168-8.046.00
 { ./autorun.sh || modprobe r8169 ; } 2>&1 | tee /log/r8168.log 
 cd .. ; rm -rf r8168-8.046.00
@@ -114,7 +119,7 @@ apt-get update && apt-get install -y dkms
 [[ $CODENAME == stretch ]] && export headers_list="$(apt-cache search linux-image-4.9.0.*amd64 | grep -v rt-amd64 | sort | tail -1 | awk '{print $1}') $(apt-cache search linux-headers-4.9.0.*amd64 | grep -v rt-amd64 | sort | tail -1 | awk '{print $1}')"
 
 apt-get purge -y $headers_list
-wget https://github.com/Aniverse/inexistence/raw/files/firmware/r8168-dkms_8.040.00-1_all.deb -O r8168-dkms_8.040.00-1_all.deb
+wget https://sourceforge.net/projects/aboxx/files/r8168/r8168-dkms_8.040.00-1_all.deb/download -O r8168-dkms_8.040.00-1_all.deb
 dpkg -i r8168-dkms_8.040.00-1_all.deb
 rm -f r8168-dkms_8.040.00-1_all.deb
 
@@ -122,9 +127,6 @@ rm -f r8168-dkms_8.040.00-1_all.deb
 show_iface
 ask_iperf
 }
-
-
-apt install r8168-dkms
 
 
 

@@ -2,8 +2,8 @@
 # Author: Aniverse
 # https://github.com/Aniverse/aBox
 
-script_update=2020.02.06
-script_version=r10003
+script_update=2020.02.07
+script_version=r10004
 
 ########################################################################################################
 
@@ -57,8 +57,8 @@ root_install_iperf() {
 build_iperf() {
     mkdir -p $HOME/.local
     cd $HOME
-    wget https://github.com/esnet/iperf/archive/3.7.tar.gz
-    tar zxf 3.7.tar.gz
+    wget https://github.com/esnet/iperf/archive/3.7.tar.gz -O iperf.3.7.tar.gz
+    tar zxf iperf.3.7.tar.gz
     cd iperf-3.7
     ./configure     --prefix=$HOME/.local
     make -j$(nproc)
