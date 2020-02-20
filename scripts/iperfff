@@ -2,8 +2,8 @@
 # Author: Aniverse
 # https://github.com/Aniverse/aBox
 
-script_update=2020.02.07
-script_version=r10004
+script_update=2020.02.20
+script_version=r10005
 
 ########################################################################################################
 
@@ -40,14 +40,21 @@ function _success() { printf "${bold}${green}✓ %s${normal}\n" "$@" ; }
 function _warning() { printf "${bold}${yellow}⚠ %s${normal}\n" "$@" ; }
 function _error() { printf "${bold}${red}✗ %s${normal}\n" "$@" ; }
 
+get_opsy() { [ -f /etc/redhat-release ] && awk '{print ($1,$3~/^[0-9]/?$3:$4)}' /etc/redhat-release && return
+[ -f /etc/os-release  ] && awk -F'[= "]' '/PRETTY_NAME/{print $3,$4,$5}' /etc/os-release && return
+[ -f /etc/lsb-release ] && awk -F'[="]+' '/DESCRIPTION/{print $2}' /etc/lsb-release && return ; }
+get_opsy | grep -qiE "debian|ubuntu" && pm=apt
+get_opsy | grep -qiE "centos" && pm=yum
+
+
 ########################################################################################################
 
 
 root_install_iperf() {
-    if [[ $(apt-get 2>&1 > /dev/null) ]]; then
+    if [[ $pm == apt ]]; then
         DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" update
         DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install iperf iperf3
-    elif [[ $(yum 2>&1 > /dev/null) ]]; then
+    elif [[ $pm == yum ]]; then
         yum update
         yum -y install iperf
         yum -y install iperf3
