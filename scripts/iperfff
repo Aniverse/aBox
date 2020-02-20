@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/aBox
 
 script_update=2020.02.20
-script_version=r10005
+script_version=r10006
 
 ########################################################################################################
 
@@ -59,6 +59,8 @@ root_install_iperf() {
         yum -y install iperf
         yum -y install iperf3
     fi
+    iperf_cmd=$(which iperf)
+    iperf3_cmd=$(which iperf3)
 }
 
 build_iperf() {
