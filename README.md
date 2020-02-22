@@ -18,8 +18,7 @@ bash <(wget -qO- https://github.com/Aniverse/aBox/raw/master/scripts/r8168)
 
 flexget 配置脚本
 ```
-wget -qO /usr/local/bin/flexgettt https://github.com/Aniverse/aBox/raw/master/scripts/flexgettt
-chmod 755 /usr/local/bin/flexgettt
+bash <(wget -qO- https://github.com/Aniverse/aBox/raw/master/scripts/flexgettt) -i
 flexgettt
 ```
 

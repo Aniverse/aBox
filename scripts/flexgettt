@@ -3,14 +3,13 @@
 # https://github.com/Aniverse/aBox
 
 script_update=2020.02.22
-script_version=r10111
+script_version=r10112
 
 ########################################################################################################
 
 usage_guide() {
+bash <(wget -qO- https://github.com/Aniverse/aBox/raw/master/scripts/flexgettt) -i
 rm -f /usr/local/bin/flexgettt ; nano /usr/local/bin/flexgettt ; chmod 755 /usr/local/bin/flexgettt
-# split -b 65535000 -d -a 4 input ouptput_$(date "+%Y-%m-%d")
-# $(date "+%Y-%m-%d %H:%M")
 }
 
 ########################################################################################################
@@ -32,6 +31,9 @@ magenta='\033[0;35m' ; cyan='\033[0;36m'; white='\033[0;37m' ; normal='\033[0m' 
 on_red='\033[41;37m' ; on_cyan='\033[46;37m' ; heihuangse='\033[43;30m'
 
 [[ ! -w "$log" ]] && { mkdir -p "$(dirname "$log")" ; touch "$log" ; chmod 666 "$log" ; }
+
+# split -b 65535000 -d -a 4 input ouptput_$(date "+%Y-%m-%d")
+# $(date "+%Y-%m-%d %H:%M")
 
 ########################################################################################################
 
