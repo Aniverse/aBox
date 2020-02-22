@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/aBox
 
 script_update=2020.02.22
-script_version=r10110
+script_version=r10111
 
 ########################################################################################################
 
@@ -42,12 +42,13 @@ logs_execute() { lines ; echo -e "${on_cyan}${bold}$(date "+%Y-%m-%d %H:%M") ANI
 
 ########################################################################################################
 
-OPTS=$(getopt -o nlcxt --long "normal,log,cron,learn,test,log-backup,log-clean,ll:" -- "$@")
+OPTS=$(getopt -o nlcxtis: --long "install,normal,log,cron,learn,test,log-backup,log-clean,search:" -- "$@")
 eval set -- "$OPTS"
 [ ! $? = 0 ] && { echo -e "Invalid option: $1" ; mode=usage ; }
 
 while true; do
   case "$1" in
+    -i  | --install   ) mode=install    ; shift ;;
     -n  | --normal    ) mode=normal     ; shift ;;
     -l  | --log       ) mode=show_log   ; shift ;;
     -c  | --cron      ) mode=add2cron   ; shift ;;
@@ -55,7 +56,7 @@ while true; do
     -t  | --test      ) mode=fg_test    ; shift ;;
     --log-backup      ) mode=log_bak    ; shift ;;
     --log-clean       ) mode=log_clean  ; shift ;;
-    --ll              ) mode=log_search ; shift 2 ;;
+    -s  | --search    ) mode=log_search ; shift 2 ;;
 #   -- ) shift; break ;;
     *  ) break ;;
   esac
@@ -75,12 +76,23 @@ done
 flexget_learn() { flexget execute --learn ; }
 flexget_test () { flexget  --test --loglevel debug execute ; }
 
+install_script() {
+    if [[ $EUID == 0 ]]; then
+        wget -qO  /usr/local/bin/flexgettt https://github.com/Aniverse/aBox/raw/master/scripts/flexgettt
+        chmod 755 /usr/local/bin/flexgettt
+    else
+        mkdir -p  $HOME/.local/bin
+        wget -qO  $HOME/.local/bin/flexgettt https://github.com/Aniverse/aBox/raw/master/scripts/flexgettt
+        chmod 755 $HOME/.local/bin/flexgettt
+    fi
+}
+
 flexget_log() {
-    tail -500 $log
+    tail -800 $log
     echo -e "${bold}\ngrep -C100 23:33 $log\ngrep --color=never -C100 'DELETED $config/.config-lock' $log\n${normal}"
 }
 
-flexget_log_serach() {
+log_serach() {
     grep -C100 "$1" $log
 }
 
@@ -152,6 +164,7 @@ flexgettt $script_update $script_version
 }
 
 case $mode in
+    install   ) install_script   ;;
     normal    ) flexget_execute  ;;
     show_log  ) flexget_log      ;;
     add2cron  ) flexget_add2cron ;;
@@ -160,4 +173,5 @@ case $mode in
     log_bak   ) log_backup_daily ;;
     log_clean ) log_clean    ;;
     usage     ) show_usage   ;;
+    log_search) log_serach   ;;
 esac
