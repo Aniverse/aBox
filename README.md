@@ -1,6 +1,8 @@
 # aBox
 Bash scripts for dedicated seedbox with root privilege.  
 
+有些就是我把原先的自用脚本给放出来，因此懒得写什么使用教程和交互界面。  
+
 IPv6 配置脚本
 ```
 bash <(wget -qO- https://github.com/Aniverse/aBox/raw/master/scripts/ipv6)
