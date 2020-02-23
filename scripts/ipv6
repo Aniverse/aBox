@@ -3,8 +3,8 @@
 # https://github.com/Aniverse/aBox
 # Author: Aniverse
 #
-script_update=2020.02.22
-script_version=r30200
+script_update=2020.02.24
+script_version=r30201
 ################################################################################################
 
 usage_guide() {
@@ -308,10 +308,10 @@ function online_interfaces_file_mod() {
 iface $interface inet6 static
       address $IPv6
       netmask $subnet
-      accept_ra 1
-      pre-up modprobe ipv6
-      pre-up dhclient -cf /etc/dhcp/dhclient6.conf -pf /run/dhclient6.$interface.pid -6 -P $interface
-      pre-down dhclient -x -pf /run/dhclient6.$interface.pid
+#     accept_ra 1
+#     pre-up modprobe ipv6
+#     pre-up dhclient -cf /etc/dhcp/dhclient6.conf -pf /run/dhclient6.$interface.pid -6 -P $interface
+#     pre-down dhclient -x -pf /run/dhclient6.$interface.pid
 ### IPv6_Script END ###
 EOF
 # pre-up /sbin/dhclient -1 -v -pf /run/dhclient6.$interface.pid -lf /var/lib/dhcp/dhclient6.$interface.leases -cf /etc/dhcp/dhclient6.conf -6 -P $interface
@@ -327,9 +327,9 @@ function online_dhclient() {
         interfaces_file_clean
         online_interfaces_file_mod
     fi
-  # write_dhclient6_conf
-  # write_dhclient6_systemd
-  # systemctl start dhclient.service
+    write_dhclient6_conf
+    write_dhclient6_systemd
+    systemctl start dhclient.service
     systemctl_restart
 }
 
@@ -680,7 +680,7 @@ ${green}<4>${cyan} 所使用的网卡名称          ${blue}$interface${jiacu}
 
 ${on_blue}------------------- 下列为可用的配置模式 -------------------${jiacu}
 
-${green}<11>${cyan} Online dhclient6  （Debian 8/9/10，Ubuntu 16.04）
+${green}<11>${cyan} Online dhclient6  （Debian 8/9/10，Ubuntu 16.04）（调试中，先别用这个）
 ${green}<12>${cyan} Online netplan    （Ubuntu 18.04）
 ${green}<13>${cyan} Online dibbler    （Debian 8/9/10，Ubuntu 16.04/18.04）
 ${green}<14>${cyan} Online odhcp6c    （Debian 8/9/10，Ubuntu 16.04/18.04）
