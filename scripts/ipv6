@@ -4,7 +4,7 @@
 # Author: Aniverse
 #
 script_update=2020.02.25
-script_version=r30202
+script_version=r30203
 ################################################################################################
 
 usage_guide() {
@@ -53,6 +53,8 @@ heibaise=${black}${on_white}   ; heihuangse=${on_yellow}${black}
 CW="${bold}${baihongse} ERROR ${jiacu}";ZY="${baihongse}${bold} ATTENTION ${jiacu}";JG="${baihongse}${bold} WARNING ${jiacu}"
 
 ################################################################################################
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:$PATH
 
 SysSupport="可能不支持"
 DISTRO=$(awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release)
