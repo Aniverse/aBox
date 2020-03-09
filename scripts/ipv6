@@ -4,7 +4,7 @@
 # Author: Aniverse
 #
 script_update=2020.03.09
-script_version=r31207
+script_version=r31208
 ################################################################################################
 
 usage_guide() {
@@ -483,6 +483,7 @@ function online_odhcp6c() {
 
 
 function leaseweb_prepare() {
+    subnet=64
     check_var_14
     file_backup
     grep -q "2001:1af8:3100:1::10" /etc/resolv.conf || echo "nameserver 2001:1af8:3100:1::10" >> /etc/resolv.conf
@@ -495,11 +496,12 @@ function leaseweb_ifupdown() {
 ### Added by IPv6_Script ###
 iface $interface inet6 static
       address $IPv6
-      netmask 64
+      netmask $subnet
       pre-up modprobe ipv6
       gateway $v6gw
 ### IPv6_Script END ###
 EOF
+    echo -e "DONE"
 }
 
 function leaseweb_netplan() {
@@ -514,6 +516,7 @@ function leaseweb_netplan() {
 ### IPv6_Script END ###
 EOF
     netplan apply
+    echo -e "DONE"
 }
 
 
@@ -738,7 +741,7 @@ ${on_blue}-------------------- 下列为可修改的参数 --------------------$
 ${green}<1>${cyan} 待配置的 IPv6 地址        ${blue}$IPv6${jiacu}
 ${green}<2>${cyan} 待配置的 DUID             ${blue}$DUID${jiacu}
 ${green}<3>${cyan} 待配置的 Subnet           ${blue}$subnet${jiacu}
-${green}<4>${cyan} 待配置的 IPv6 Gateway     ${blue}$subnet${jiacu}
+${green}<4>${cyan} 待配置的 IPv6 Gateway     ${blue}$v6gw${jiacu}
 
 以上 4 个参数是否需要修改，在脚本可用性一栏有提示
 
