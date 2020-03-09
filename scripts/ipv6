@@ -3,8 +3,8 @@
 # https://github.com/Aniverse/aBox
 # Author: Aniverse
 #
-script_update=2020.03.08
-script_version=r31204
+script_update=2020.03.09
+script_version=r31205
 ################################################################################################
 
 usage_guide() {
@@ -176,8 +176,8 @@ function check_var_123() {
     [[ -z $subnet ]] && echo "${red}ERROR: No subnet input!${normal}" && ask_subnet
 }
 
-function check_var_123() {
-    [[ -z $IPv6   ]] && echo "${red}ERROR: No IPv6 input!${normal}"   && ask_ipv6
+function check_var_14() {
+    [[ -z $IPv6   ]] && echo "${red}ERROR: No IPv6 input!${normal}"         && ask_ipv6
     [[ -z $v6gw   ]] && echo "${red}ERROR: No IPv6 Gateway input!${normal}" && ask_v6gw
 }
 
@@ -474,6 +474,46 @@ function online_odhcp6c() {
 }
 
 
+########################################################################### LeaseWeb
+
+
+function leaseweb_prepare() {
+    check_var_14
+    file_backup
+    grep -q "2001:1af8:3100:1::10" /etc/resolv.conf || echo "nameserver 2001:1af8:3100:1::10" >> /etc/resolv.conf
+}
+
+function leaseweb_ifupdown() {
+    leaseweb_prepare
+    interfaces_file_clean
+    cat << EOF >> /etc/network/interfaces
+### Added by IPv6_Script ###
+iface $interface inet6 static
+      address $IPv6
+      netmask 64
+      pre-up modprobe ipv6
+      gateway $v6gw
+### IPv6_Script END ###
+EOF
+}
+
+function leaseweb_netplan() {
+    leaseweb_prepare
+    netplan_netcfg_file_clean
+    cat << EOF >> /etc/netplan/01-netcfg.yaml
+### Added by IPv6_Script ###
+      dhcp6: no
+      gateway6: $v6gw
+      addresses:
+      - $IPv6/$subnet
+### IPv6_Script END ###
+EOF
+    netplan apply
+}
+
+
+
+
 ###########################################################################
 
 
@@ -506,7 +546,7 @@ function systemctl_restart() {
 function ipv6_test() {
     echo -ne "${bold}检测 IPv6 连接性 ... ${normal}"
     IPv6_test=$(ping6 -c 5 ipv6.google.com | grep 'received' | awk -F',' '{ print $2 }' | awk '{ print $1 }')
-    if [[ $IPv6_test > 0 ]]; then
+    if [[ $IPv6_test -gt 0 ]]; then
         echo "${bold}${green}成功！${normal}"
         exit 0
     else
