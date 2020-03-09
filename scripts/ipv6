@@ -4,7 +4,7 @@
 # Author: Aniverse
 #
 script_update=2020.03.09
-script_version=r31206
+script_version=r31207
 ################################################################################################
 
 usage_guide() {
@@ -150,14 +150,18 @@ function _ipip() {
         server=OVH
         script_support="不需要支持"
         script_support_add="，因为 OVH 装完自带 IPv6"
+    elif [[ $ASN == AS60781 ]];then
+        server=Online
+        script_support="支持"
+        script_support_add="，请填写 1/4 参数"
     elif [[ $ASN == AS12876 ]];then
         server=Online
         script_support="支持"
-        script_support_add="，请填写相关参数"
+        script_support_add="，请填写 1/2/3 参数"
     elif [[ $ASN == AS21409 ]];then
         server=Ikoula
         script_support="支持"
-        script_support_add=""
+        script_support_add="，不用写参数"
     else
         server=Unknown
         script_support="不支持"
@@ -647,7 +651,7 @@ function ask_DUID() {
 }
 
 function ask_subnet() {
-    read -ep "${bold}输入待配置的 subnet：${blue}"    subnet ; echo -n "${normal}"
+    read -ep "${bold}输入待配置的 Subnet：${blue}"    subnet ; echo -n "${normal}"
 }
 
 function ask_v6gw() {
@@ -733,14 +737,14 @@ ${on_blue}-------------------- 下列为可修改的参数 --------------------$
 
 ${green}<1>${cyan} 待配置的 IPv6 地址        ${blue}$IPv6${jiacu}
 ${green}<2>${cyan} 待配置的 DUID             ${blue}$DUID${jiacu}
-${green}<3>${cyan} 待配置的 subnet           ${blue}$subnet${jiacu}
-${green}<4>${cyan} 待配置的 gateway          ${blue}$subnet${jiacu}
+${green}<3>${cyan} 待配置的 Subnet           ${blue}$subnet${jiacu}
+${green}<4>${cyan} 待配置的 IPv6 Gateway     ${blue}$subnet${jiacu}
 
-1/2/3 为 Online 独服需要设置的项目，1/4 为 LeaseWeb 独服需要设置的项目，Ikoula 什么都不用设置
+以上 4 个参数是否需要修改，在脚本可用性一栏有提示
 
-${green}<4>${cyan} 所使用的网卡名称          ${blue}$interface${jiacu}
+${green}<5>${cyan} 所使用的网卡名称          ${blue}$interface${jiacu}
 
-这个参数脚本会自动检测，一般来说默认的就是正确的不用改
+脚本会自动检测网卡，一般来说默认的就是正确的不用改
 
 ${on_blue}------------------- 下列为可用的配置模式 -------------------${jiacu}
 
@@ -765,15 +769,16 @@ ${red}<99>${jiacu} 退出脚本（直接回车也是退出）
          1) ask_ipv6      ; ipv6_menu ;;
          2) ask_DUID      ; ipv6_menu ;;
          3) ask_subnet    ; ipv6_menu ;;
-         4) ask_interface ; ipv6_menu ;;
+         4) ask_v6gw      ; ipv6_menu ;;
+         5) ask_interface ; ipv6_menu ;;
         11) mode=ol  ; ask_pause ; mode_action ;;
         12) mode=ol2 ; ask_pause ; mode_action ;;
         13) mode=ol3 ; ask_pause ; mode_action ;;
         14) mode=ol4 ; ask_pause ; mode_action ;;
         21) mode=ik  ; ask_pause ; mode_action ;;
         22) mode=ik2 ; ask_pause ; mode_action ;;
-        21) mode=lw  ; ask_pause ; mode_action ;;
-        22) mode=lw2 ; ask_pause ; mode_action ;;
+        31) mode=lw  ; ask_pause ; mode_action ;;
+        32) mode=lw2 ; ask_pause ; mode_action ;;
         90) ask_reboot ;;
         95) mode=c   ; ask_pause ; mode_action  ; ipv6_menu ;;
         96) ask_ipv4 ; ipv6_menu ;;
