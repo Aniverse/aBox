@@ -4,7 +4,7 @@
 # Author: Aniverse
 #
 script_update=2020.03.09
-script_version=r31205
+script_version=r31206
 ################################################################################################
 
 usage_guide() {
@@ -17,20 +17,21 @@ bash <(wget -qO- https://github.com/Aniverse/aBox/raw/master/scripts/ipv6)    -m
 reboot=no
 ip_check=y
 
-OPTS=$(getopt -o m:d:s:6:i:rhtc --long "mode:,ipv6:,duid:,subnet:,interface:,help,reboot,test,clean" -- "$@")
+OPTS=$(getopt -o m:d:s:6:i:g:rhtc --long "mode:,ipv6:,duid:,subnet:,interface:,gateway:,help,reboot,test,clean" -- "$@")
 [ ! $? = 0 ] && { echo -e "Invalid option" ; exit 1 ; }
 eval set -- "$OPTS"
 
 while true; do
   case "$1" in
-    -m | --mode   ) mode="$2"   ; shift 2 ;;
-    -6 | --ipv6   ) IPv6="$2"   ; shift 2 ;;
-    -d | --duid   ) DUID="$2"   ; shift 2 ;;
-    -s | --subnet ) subnet="$2" ; shift 2 ;;
+    -m | --mode      ) mode="$2"      ; shift 2 ;;
+    -6 | --ipv6      ) IPv6="$2"      ; shift 2 ;;
+    -d | --duid      ) DUID="$2"      ; shift 2 ;;
+    -s | --subnet    ) subnet="$2"    ; shift 2 ;;
+    -g | --gateway   ) v6gw="$2"      ; shift 2 ;;
     -i | --interface ) interface="$2" ; shift 2 ;;
-    -r | --reboot ) reboot=yes  ; shift   ;;
-    -h | --help   ) mode=h      ; shift   ;;
-    -t | --test   ) mode=t      ; shift   ;;
+    -r | --reboot    ) reboot=yes     ; shift   ;;
+    -h | --help      ) mode=h         ; shift   ;;
+    -t | --test      ) mode=t         ; shift   ;;
     -c | --clean  ) mode=c      ; shift   ;;
      * ) break ;;
   esac
