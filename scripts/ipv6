@@ -3,8 +3,8 @@
 # https://github.com/Aniverse/aBox
 # Author: Aniverse
 #
-script_update=2020.03.09
-script_version=r31208
+script_update=2020.03.10
+script_version=r31209
 ################################################################################################
 
 usage_guide() {
@@ -269,7 +269,7 @@ EOF
 
 function write_dhclient6_conf() {
     cat << EOF > /etc/dhcp/dhclient6.conf
-interface \"$interface\" {
+interface "$interface" {
 send dhcp6.client-id $DUID;
 request;
 }
