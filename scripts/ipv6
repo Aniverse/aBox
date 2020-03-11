@@ -4,7 +4,7 @@
 # Author: Aniverse
 #
 script_update=2020.03.11
-script_version=r31210
+script_version=r31211
 ################################################################################################
 
 usage_guide() {
@@ -382,14 +382,16 @@ EOF
 
 function dibbler_install() {
     dpkg-query -W -f='${Status}' build-essential 2>/dev/null | grep -q "ok installed" || apt-get install -y build-essential
-    wget https://netix.dl.sourceforge.net/project/dibbler/dibbler/1.0.1/dibbler-1.0.1.tar.gz
-    tar zxf dibbler-1.0.1.tar.gz
-    cd dibbler-1.0.1
-    ./configure
-    make -j$(nproc)
-    make install
-    cd ..
-    rm -rf dibble*
+    if [[ ! -f /usr/local/sbin/dibbler-client ]]; then
+        wget -4 https://netix.dl.sourceforge.net/project/dibbler/dibbler/1.0.1/dibbler-1.0.1.tar.gz -O dibbler-1.0.1.tar.gz
+        tar zxf dibbler-1.0.1.tar.gz
+        cd dibbler-1.0.1
+        ./configure
+        make -j$(nproc)
+        make install
+        cd ..
+        rm -rf dibble*
+    fi
     [[ ! -f /usr/local/sbin/dibbler-client ]] && echo -e "\nError: No dibbler-client found!\n" && exit 1
 }
 
@@ -606,23 +608,19 @@ function cleanup() {
 }
 
 function info() {
+    echo
+    lines
     echo -e "
 script_update=$script_update
 script_version=$script_version
 
-DISTRO=$DISTRO
-CODENAME=$CODENAME
+OS=$DISTRO $CODENAME
 IPv4=$serveripv4
 interface=$interface
-mode=$mode   type=$type
-reboot=$reboot
-
-IPv6=$IPv6
-DUID=$DUID
-subnet=$subnet
+type=$type
 "
     lines
-    echo -e "${yellow}cat /etc/network/interfaces${normal}\n"
+    echo -e "\n${yellow}cat /etc/network/interfaces${normal}\n"
     cat /etc/network/interfaces       2>/dev/null
     lines
     echo -e "\n${yellow}cat /etc/netplan/01-netcfg.yaml${normal}\n"
@@ -637,7 +635,7 @@ netplan apply
 systemctl restart networking.service
 ping6 -c 5 ipv6.google.com
 "
-    lines
+    lines;echo
 }
 
 function ask_pause() {
