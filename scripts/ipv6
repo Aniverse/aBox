@@ -4,7 +4,7 @@
 # Author: Aniverse
 #
 script_update=2020.03.11
-script_version=r31211
+script_version=r31212
 ################################################################################################
 
 usage_guide() {
@@ -423,7 +423,10 @@ ExecStart=/usr/local/sbin/dibbler-client start
 [Install]
 WantedBy=multi-user.target
 EOF
-    systemctl enable dibbler-client.service
+    systemctl enable dibbler-client
+    systemctl start  dibbler-client
+    sleep 5
+    systemctl status dibbler-client
 }
 
 
@@ -446,13 +449,15 @@ function odhcp6c_install() {
         dpkg-query -W -f='${Status}' $app 2>/dev/null | grep -q "ok installed" || apt-get install -y $app
     done
 
-    git clone --depth=1 https://github.com/openwrt/odhcp6c
-    cd odhcp6c
-    cmake .
-    make
-    make install
-    cd ..
-    rm -rf odhcp6c
+    if [[ -z $(which odhcp6c) ]]; then
+        git clone --depth=1 https://github.com/openwrt/odhcp6c
+        cd odhcp6c
+        cmake .
+        make
+        make install
+        cd ..
+        rm -rf odhcp6c
+    fi
 }
 
 
@@ -480,6 +485,8 @@ function online_odhcp6c() {
     odhcp6c_install
     write_odhcp6c_systemd
     systemctl start odhcp6c
+    sleep 5
+    systemctl status odhcp6c
 }
 
 
@@ -621,15 +628,30 @@ type=$type
 "
     lines
     echo -e "\n${yellow}cat /etc/network/interfaces${normal}\n"
-    cat /etc/network/interfaces       2>/dev/null
+    cat /etc/network/interfaces           2>/dev/null
     lines
-    echo -e "\n${yellow}cat /etc/netplan/01-netcfg.yaml${normal}\n"
-    cat /etc/netplan/01-netcfg.yaml   2>/dev/null
-    lines
+    if [[ -f /etc/netplan/01-netcfg.yaml ]]; then
+        echo -e "\n${yellow}cat /etc/netplan/01-netcfg.yaml${normal}\n"
+        cat /etc/netplan/01-netcfg.yaml   2>/dev/null
+        lines
+    fi
+    if [[ -f /etc/dibbler/client.conf ]]; then
+        echo -e "\n${yellow}cat /etc/dibbler/client.conf${normal}\n"
+        cat /etc/dibbler/client.conf      2>/dev/null
+        lines
+    fi
+    if [[ -f /var/lib/dibbler/client-duid ]]; then
+        echo -e "\n${yellow}cat /var/lib/dibbler/client-duid${normal}\n"
+        cat /var/lib/dibbler/client-duid  2>/dev/null
+        lines
+    fi
+    if [[ -f /etc/systemd/system/odhcp6c.service ]]; then
+        echo -e "\n${yellow}cat /etc/systemd/system/odhcp6c.service${normal}\n"
+        cat /etc/systemd/system/odhcp6c.service   2>/dev/null
+        lines
+    fi
     echo -e "
-cat /etc/dibbler/client.conf
-cat /etc/systemd/system/odhcp6c.service
-cat /var/lib/dibbler/client-duid
+cat 
 cd /log/script && ls
 netplan apply
 systemctl restart networking.service
@@ -759,13 +781,13 @@ ${green}<5>${cyan} 所使用的网卡名称          ${blue}$interface${jiacu}
 
 ${on_blue}------------------- 下列为可用的配置模式 -------------------${jiacu}
 
-${green}<11>${cyan} Online dhclient6  （Debian 8/9/10，Ubuntu 16.04）（调试中，先别用这个）
+${green}<11>${cyan} Online dhclient6  （Debian 8/9/10, Ubuntu 16.04）（调试中，先别用这个）
 ${green}<12>${cyan} Online netplan    （Ubuntu 18.04）
-${green}<13>${cyan} Online dibbler    （Debian 8/9/10，Ubuntu 16.04）
-${green}<14>${cyan} Online odhcp6c    （Debian 8/9/10，Ubuntu 16.04/18.04）
-${green}<21>${cyan} Ikoula ifupdown   （Debian 8/9/10，Ubuntu 16.04）
+${green}<13>${cyan} Online dibbler    （Debian 8/9/10, Ubuntu 16.04）
+${green}<14>${cyan} Online odhcp6c    （Debian 8/9/10, Ubuntu 16.04/18.04）（推荐）
+${green}<21>${cyan} Ikoula ifupdown   （Debian 8/9/10, Ubuntu 16.04）
 ${green}<22>${cyan} Ikoula netplan    （Ubuntu 18.04）
-${green}<31>${cyan} LeaseWeb ifupdown （Debian 8/9/10，Ubuntu 16.04）
+${green}<31>${cyan} LeaseWeb ifupdown （Debian 8/9/10, Ubuntu 16.04）
 ${green}<32>${cyan} LeaseWeb netplan  （Ubuntu 18.04）
 
 ${red}<90>${jiacu} 重启
