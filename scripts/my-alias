@@ -3,13 +3,12 @@
 # Author: Aniverse
 # https://github.com/Aniverse/aBox
 #########################################################################################################
-script_update=2020.03.10
-script_version=r10000
+script_update=2020.03.14
+script_version=r10001
 
 usage_guide() {
 source <(wget -qO- https://github.com/Aniverse/aBox/raw/master/scripts/my-alias)
 }
-
 
 #########################################################################################################
 
@@ -166,10 +165,12 @@ unset MAILCHECK
 # Custom History Format
 HISTFILESIZE=4000
 HISTSIZE=4000
-export HISTTIMEFORMAT="\${yellow}[%F]${cyan}[%T]\${normal} "
+export HISTTIMEFORMAT="\${yellow}[%F]\${cyan}[%T]\${normal} "
 
 # Disable mail check/warning
 shopt -u mailwarn
 unset MAILCHECK
 
 #########################################################################################################
+
+PS1='\[\e[1;35m\][\t] \[\e[1;34m\]\! \[\e[1;31m\]\u\[\e[1;33m\]@\[\e[1;36m\]\h \[\e[1;33m\]\w \[\e[1;32m\]$ \[\e[0m\]'
