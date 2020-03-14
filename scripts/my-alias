@@ -4,10 +4,11 @@
 # https://github.com/Aniverse/aBox
 #########################################################################################################
 script_update=2020.03.14
-script_version=r11002
+script_version=r11003
 
 usage_guide() {
 source <(wget -qO- https://github.com/Aniverse/aBox/raw/master/scripts/my-alias)
+source <(wget -qO- https://github.com/Aniverse/aBox/raw/master/scripts/my-alias) username
 }
 
 #########################################################################################################
@@ -17,6 +18,12 @@ iUser=$1
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
+export TZ="/usr/share/zoneinfo/Asia/Shanghai"
+export PATH=$HOME/bin:$HOME/.bin:$HOME/.pip/bin:$HOME/.local/bin:$PATH
+
+if (! export | grep -q sbin); then
+     export PATH=$PATH:/usr/local/sbin:/usr/sbin:/sbin
+fi
 
 #########################################################################################################
 
@@ -154,7 +161,20 @@ alias swapoff="swapoff /etc/.swapfile;rm -f /etc/.swapfile"
 alias yuan="nano +20 /etc/apt/sources.list"
 alias sshr="sed -i '/.*AllowGroups.*/d' /etc/ssh/sshd_config ; sed -i '/.*PasswordAuthentication.*/d' /etc/ssh/sshd_config ; sed -i '/.*PermitRootLogin.*/d' /etc/ssh/sshd_config ; echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config ; /etc/init.d/ssh restart >/dev/null 2>&1 && echo -e '\n已开启 root 登陆\n'"
 
-#########################################################################################################
+######################################################################################################### Shared Seedbox
+
+if [[ -d $HOME/.iferal ]]; then
+    alias sysr="systemctl --user daemon-reload"
+    alias qba="systemctl  --user start   qbittorrent"
+    alias qbb="systemctl  --user stop    qbittorrent"
+    alias qbc="systemctl  --user status  qbittorrent"
+    alias qbr="systemctl  --user restart qbittorrent"
+fi
+
+alias space='du -sB GiB $HOME/'
+alias zjpid='ps aux | egrep "$(whoami)|COMMAND" | egrep -v "grep|aux|root"'
+
+######################################################################################################### QuickBox
 
 if [[ -d /etc/QuickBox ]] && [[ -n $iUser ]]; then
     alias qba="systemctl start qbittorrent@$iUser"
@@ -198,11 +218,6 @@ if [[ -d /etc/QuickBox ]] && [[ -n $iUser ]]; then
 fi
 
 #########################################################################################################
-
-# Custom History Format
-HISTFILESIZE=4000
-HISTSIZE=4000
-export HISTTIMEFORMAT="\${yellow}[%F]${cyan}[%T]\${normal} "
 
 # Disable mail check/warning
 shopt -u mailwarn
