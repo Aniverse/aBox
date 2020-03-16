@@ -3,10 +3,11 @@
 # Author: Aniverse
 # https://github.com/Aniverse/aBox
 #########################################################################################################
-script_update=2020.03.14
-script_version=r11003
+script_update=2020.03.16
+script_version=r11004
 
 usage_guide() {
+rm -f 1 ; nano 1 ; source 1
 source <(wget -qO- https://github.com/Aniverse/aBox/raw/master/scripts/my-alias)
 source <(wget -qO- https://github.com/Aniverse/aBox/raw/master/scripts/my-alias) username
 }
@@ -22,7 +23,7 @@ export TZ="/usr/share/zoneinfo/Asia/Shanghai"
 export PATH=$HOME/bin:$HOME/.bin:$HOME/.pip/bin:$HOME/.local/bin:$PATH
 
 if (! export | grep -q sbin); then
-     export PATH=$PATH:/usr/local/sbin:/usr/sbin:/sbin
+    export PATH=$PATH:/usr/local/sbin:/usr/sbin:/sbin
 fi
 
 #########################################################################################################
@@ -161,6 +162,8 @@ alias swapoff="swapoff /etc/.swapfile;rm -f /etc/.swapfile"
 alias yuan="nano +20 /etc/apt/sources.list"
 alias sshr="sed -i '/.*AllowGroups.*/d' /etc/ssh/sshd_config ; sed -i '/.*PasswordAuthentication.*/d' /etc/ssh/sshd_config ; sed -i '/.*PermitRootLogin.*/d' /etc/ssh/sshd_config ; echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config ; /etc/init.d/ssh restart >/dev/null 2>&1 && echo -e '\n已开启 root 登陆\n'"
 
+alias jxe="journalctl -xe"
+
 ######################################################################################################### Shared Seedbox
 
 if [[ -d $HOME/.iferal ]]; then
@@ -226,7 +229,7 @@ unset MAILCHECK
 # Custom History Format
 HISTFILESIZE=4000
 HISTSIZE=4000
-export HISTTIMEFORMAT="\${yellow}[%F]\${cyan}[%T]\${normal} "
+export HISTTIMEFORMAT="${yellow}[%F]${cyan}[%T]${normal} "
 
 # Disable mail check/warning
 shopt -u mailwarn
