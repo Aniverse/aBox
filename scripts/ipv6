@@ -3,8 +3,8 @@
 # https://github.com/Aniverse/aBox
 # Author: Aniverse
 #
-script_update=2020.03.11
-script_version=r31212
+script_update=2020.03.18
+script_version=r31213
 ################################################################################################
 
 usage_guide() {
@@ -328,15 +328,22 @@ function online_interfaces_file_mod() {
 iface $interface inet6 static
       address $IPv6
       netmask $subnet
-#     accept_ra 1
-#     pre-up modprobe ipv6
-#     pre-up dhclient -cf /etc/dhcp/dhclient6.conf -pf /run/dhclient6.$interface.pid -6 -P $interface
-#     pre-down dhclient -x -pf /run/dhclient6.$interface.pid
+EOF
+
+}
+
+
+
+function online_interfaces_file_mod_dhclient() {
+    cat << EOF >> /etc/network/interfaces
+      accept_ra 1
+      pre-up modprobe ipv6
+      pre-up dhclient -cf /etc/dhcp/dhclient6.conf -pf /run/dhclient6.$interface.pid -6 -P $interface
+      pre-down dhclient -x -pf /run/dhclient6.$interface.pid
 ### IPv6_Script END ###
 EOF
 # pre-up /sbin/dhclient -1 -v -pf /run/dhclient6.$interface.pid -lf /var/lib/dhcp/dhclient6.$interface.leases -cf /etc/dhcp/dhclient6.conf -6 -P $interface
 }
-
 
 
 # Online／OneProvider Paris 独服，Ubuntu 16.04，Debian 8/9/10
@@ -346,6 +353,11 @@ function online_dhclient() {
     if [[ ! $(grep -q "iface $interface inet6 static" /etc/network/interfaces) ]]; then
         interfaces_file_clean
         online_interfaces_file_mod
+            if [[ $CODENAME == bionic ]];then
+                apt-get install -y ifupdown
+                echo "auto $interface" >> /etc/network/interfaces
+            fi
+        online_interfaces_file_mod_dhclient
     fi
     write_dhclient6_conf
     write_dhclient6_systemd
@@ -411,6 +423,12 @@ EOF
     file_backup
     interfaces_file_clean
     online_interfaces_file_mod
+    if [[ $CODENAME == bionic ]];then
+        apt-get install -y ifupdown
+        echo "auto $interface" >> /etc/network/interfaces
+    fi
+    echo "### IPv6_Script END ###" >> /etc/network/interfaces
+
     cat << EOF > /etc/systemd/system/dibbler-client.service
 [Unit]
 Description=Dibbler Client
@@ -592,11 +610,11 @@ function ask_reboot() {
 
 function cleanup() {
     echo -n "Cleanup ... "
-    if [[ $type == ifdown ]]; then
-        interfaces_file_clean
-    else
-        netplan_netcfg_file_clean
-    fi
+
+    interfaces_file_clean
+    netplan_netcfg_file_clean
+    rm -f /etc/dhcp/dhclient6.conf    /etc/dibbler/client.conf   /var/lib/dibbler/client-duid
+
     systemctl stop    dhclient-netplan.service  2>/dev/null
     systemctl stop    dhclient.service          2>/dev/null
     systemctl stop    dibbler-client.service    2>/dev/null
@@ -605,12 +623,13 @@ function cleanup() {
     systemctl disable dhclient.service          2>/dev/null
     systemctl disable dibbler-client.service    2>/dev/null
     systemctl disable odhcp6c.service           2>/dev/null
-    systemctl daemon-reload
+    
     rm -f /etc/systemd/system/dhclient.service
     rm -f /etc/systemd/system/dhclient-netplan.service
     rm -f /etc/systemd/system/dibbler-client.service
     rm -f /etc/systemd/system/odhcp6c.service
-    rm -f /etc/dhcp/dhclient6.conf    /etc/dibbler/client.conf   /var/lib/dibbler/client-duid
+    systemctl daemon-reload
+
     echo "DONE"
 }
 
@@ -711,7 +730,7 @@ ${bold}${green}Usage: ${normal}
        ol2   Online netplan, only for Online/OneProvider servers using netplan
              Typically, This is ONLY for Ubuntu 18.04
        ol3   Online dibbler, only for Online/OneProvider servers
-             Typically, This is for Ubuntu 16.04, Debian 8/9/10
+             Typically, This is for Ubuntu 16.04/18.04, Debian 8/9/10
        ol4   Online odhcp6c, only for Online/OneProvider servers
              Typically, This is for Ubuntu 16.04/18.04, Debian 8/9/10
        lw    LeaseWeb ifupdown, only for LeaseWeb servers using ifupdown
@@ -783,7 +802,7 @@ ${on_blue}------------------- 下列为可用的配置模式 -------------------
 
 ${green}<11>${cyan} Online dhclient6  （Debian 8/9/10, Ubuntu 16.04）（调试中，先别用这个）
 ${green}<12>${cyan} Online netplan    （Ubuntu 18.04）
-${green}<13>${cyan} Online dibbler    （Debian 8/9/10, Ubuntu 16.04）
+${green}<13>${cyan} Online dibbler    （Debian 8/9/10, Ubuntu 16.04/18.04）
 ${green}<14>${cyan} Online odhcp6c    （Debian 8/9/10, Ubuntu 16.04/18.04）（推荐）
 ${green}<21>${cyan} Ikoula ifupdown   （Debian 8/9/10, Ubuntu 16.04）
 ${green}<22>${cyan} Ikoula netplan    （Ubuntu 18.04）
