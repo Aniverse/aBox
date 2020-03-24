@@ -5,7 +5,7 @@
 ####################################################################################################
 
 script_update=2020.03.24
-script_version=r20015
+script_version=r20016
 
 ####################################################################################################
 usage_guide() {
@@ -29,11 +29,28 @@ heibaise=${black}${on_white}   ; heihuangse=${on_yellow}${black}
 
 ####################################################################################################
 
+[[ $EUID != 0 ]] && echo -e "没 root 跑个蛋" && exit 1
+
 CODENAME=$(cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"\|(\|)\|[0-9.,]\|version\|lts//g' | awk '{print $2}')
 kernel=$(uname -r)
 kernelvvv=$(uname -r | grep -oE [0-9.-]+ | head -1)
 KNA=$(awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release)
 KernelBit=$(getconf LONG_BIT)
+
+[ -n "$(grep 'eth0:' /proc/net/dev)" ] && wangka1=eth0 || wangka1=`cat /proc/net/dev |awk -F: 'function trim(str){sub(/^[ \t]*/,"",str); sub(/[ \t]*$/,"",str); return str } NR>2 {print trim($1)}'  |grep -Ev '^lo|^sit|^stf|^gif|^dummy|^vmnet|^vir|^gre|^ipip|^ppp|^bond|^tun|^tap|^ip6gre|^ip6tnl|^teql|^venet|^he-ipv6|^docker' |awk 'NR==1 {print $0}'`
+wangka2=$(ip link show | grep -i broadcast | grep -m1 UP  | cut -d: -f 2 | cut -d@ -f 1 | sed 's/ //g')
+
+if [[ -n $wangka2 ]]; then
+    if [[ $wangka1 == $wangka2 ]];then
+        interface=$wangka1
+    else
+        interface=$wangka2
+    fi
+else
+    interface=$wangka1
+fi
+
+mkdir -p /log
 
 ####################################################################################################
 
@@ -42,27 +59,26 @@ command -v ifconfig  | grep -q ifcon  || apt-get install -y net-tools
 command -v ethtool   | grep -q ethtoo || apt-get install -y ethtool
 command -v iperf     | grep -q iperf  || apt-get install -y iperf
 command -v iperf3    | grep -q iperf3 || apt-get install -y iperf3
-wangka=$(ifconfig -a | grep -B 1 $(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}') | head -n1 | awk '{print $1}' | sed "s/:$//")
 }
 
 function show_headers() {
-echo -e "${bold}以下是系统里的 kernel 和 headers 情况${yellow}"
+echo -e "${bold}Kernel and headers installed in your system${yellow}"
 echo $kernel
 dpkg -l | grep linux-headers | grep $kernelvvv | awk '{print $2}'
 echo -e "${normal}"
 }
 
 function show_iface() {
-echo -e "${bold}以下是系统里的网卡情况${yellow}"
-echo $wangka ; echo
-ethtool -i $wangka
+echo -e "${bold}The followings are details about your current interface${yellow}"
+echo "Interface: $interface"
+ethtool -i $interface
 echo -e "${normal}"
 }
 
-function kill_ruisu() {
+function kill_appex() {
 [[ -f /appex/bin/serverSpeeder.sh ]] && { /appex/bin/serverSpeeder.sh  stop ; /appex/bin/serverSpeeder.sh  status ; ruisu=y ; }
 [[ -f /appex/bin/lotServer.sh     ]] && { /appex/bin/lotServer.sh      stop ; /appex/bin/lotServer.sh      status ; ruisu=y ; }
-[[ -z $ruisu ]] && echo -e "\n${red}未发现锐速${normal}\n" || echo -e "\n${red}锐速已被关闭${normal}\n"
+[[ -z $ruisu ]] && echo -e "\n${red}No ServerSpeeder or LotServer Found${normal}\n" || echo -e "\n${red}ServerSpeeder or LotServer has been shut down ...${normal}\n"
 }
 
 function ask_iperf() {
@@ -111,7 +127,7 @@ for app in firmware-realtek dkms ; do
     dpkg -l | grep $app -q && apt-get purge -y $app
 done
 
-apt-get update && apt-get install -y dkms
+apt-get update && apt-get install -y dkms | tee /log/r8168.log 
 
 [[ $CODENAME == bionic  ]] && export headers_list="$(apt-cache search linux-image-4.15.0.*generic | sort | tail -1 | awk '{print $1}')         $(apt-cache search linux-headers-4.15.0.*generic | sort | tail -1 | awk '{print $1}')"
 [[ $CODENAME == xenial  ]] && export headers_list="$(apt-cache search linux-image-4.4.0.*generic  | sort | tail -1 | awk '{print $1}')         $(apt-cache search linux-headers-4.4.0.*generic  | sort | tail -1 | awk '{print $1}')"
@@ -139,7 +155,7 @@ ask_iperf
 
 
 check_apps
-kill_ruisu
+kill_appex
 show_iface
 show_headers
 
@@ -148,7 +164,7 @@ echo -e "${green}2)${normal} Install r8168 via dkms"
 echo -e "${green}3)${normal} Compile r8168 driver and then reboot"
 echo -e "${green}4)${normal} Install r8168 via dkms and then reboot"
 echo -e "${green}5)${normal} Do iperf test"
-read -ep "${bold}${yellow}Which method would you like? ${normal}" responce
+read -ep "${bold}${yellow}What would you like to do? ${normal}" responce
 case $responce in
     1 ) r8168_driver ;;
     2 ) r8168_dkms ;;
