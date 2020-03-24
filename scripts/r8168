@@ -4,8 +4,8 @@
 
 ####################################################################################################
 
-script_update=2020.02.07
-script_version=r20014
+script_update=2020.03.24
+script_version=r20015
 
 ####################################################################################################
 usage_guide() {
@@ -62,7 +62,7 @@ echo -e "${normal}"
 function kill_ruisu() {
 [[ -f /appex/bin/serverSpeeder.sh ]] && { /appex/bin/serverSpeeder.sh  stop ; /appex/bin/serverSpeeder.sh  status ; ruisu=y ; }
 [[ -f /appex/bin/lotServer.sh     ]] && { /appex/bin/lotServer.sh      stop ; /appex/bin/lotServer.sh      status ; ruisu=y ; }
-[[ -z $ruisu ]] && echo -e "\n${red}No ruisu found${normal}\n" || echo -e "\n${red}Stopped ruisu${normal}\n"
+[[ -z $ruisu ]] && echo -e "\n${red}未发现锐速${normal}\n" || echo -e "\n${red}锐速已被关闭${normal}\n"
 }
 
 function ask_iperf() {
@@ -113,10 +113,11 @@ done
 
 apt-get update && apt-get install -y dkms
 
-[[ $CODENAME == bionic  ]] && export headers_list="$(apt-cache search linux-image-4.15.0.*generic | sort | tail -1 | awk '{print $1}') $(apt-cache search linux-headers-4.15.0.*generic | sort | tail -1 | awk '{print $1}')"
-[[ $CODENAME == xenial  ]] && export headers_list="$(apt-cache search linux-image-4.4.0.*generic | sort | tail -1 | awk '{print $1}') $(apt-cache search linux-headers-4.4.0.*generic | sort | tail -1 | awk '{print $1}')"
-[[ $CODENAME == jessie  ]] && export headers_list="$(apt-cache search linux-image-3.16.0.*amd64 | grep -v rt-amd64 | sort | tail -1 | awk '{print $1}') $(apt-cache search linux-headers-3.16.0.*amd64 | grep -v rt-amd64 | sort | tail -1 | awk '{print $1}')"
-[[ $CODENAME == stretch ]] && export headers_list="$(apt-cache search linux-image-4.9.0.*amd64 | grep -v rt-amd64 | sort | tail -1 | awk '{print $1}') $(apt-cache search linux-headers-4.9.0.*amd64 | grep -v rt-amd64 | sort | tail -1 | awk '{print $1}')"
+[[ $CODENAME == bionic  ]] && export headers_list="$(apt-cache search linux-image-4.15.0.*generic | sort | tail -1 | awk '{print $1}')         $(apt-cache search linux-headers-4.15.0.*generic | sort | tail -1 | awk '{print $1}')"
+[[ $CODENAME == xenial  ]] && export headers_list="$(apt-cache search linux-image-4.4.0.*generic  | sort | tail -1 | awk '{print $1}')         $(apt-cache search linux-headers-4.4.0.*generic  | sort | tail -1 | awk '{print $1}')"
+[[ $CODENAME == jessie  ]] && export headers_list="$(apt-cache search linux-image-3.16.0.*amd64   | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')        $(apt-cache search linux-headers-3.16.0.*amd64 | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')"
+[[ $CODENAME == stretch ]] && export headers_list="$(apt-cache search linux-image-4.9.0.*amd64    | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')        $(apt-cache search linux-headers-4.9.0.*amd64  | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')"
+[[ $CODENAME == buster  ]] && export headers_list="$(apt-cache search linux-image-4.19.0.*amd64   | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')        $(apt-cache search linux-headers-4.19.0.*amd64 | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')"
 
 apt-get purge -y $headers_list
 wget https://sourceforge.net/projects/aboxx/files/r8168/r8168-dkms_8.040.00-1_all.deb/download -O r8168-dkms_8.040.00-1_all.deb
