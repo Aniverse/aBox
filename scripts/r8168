@@ -5,7 +5,7 @@
 ####################################################################################################
 
 script_update=2020.03.24
-script_version=r20016
+script_version=r20017
 
 ####################################################################################################
 usage_guide() {
@@ -55,94 +55,100 @@ mkdir -p /log
 ####################################################################################################
 
 function check_apps() {
-command -v ifconfig  | grep -q ifcon  || apt-get install -y net-tools
-command -v ethtool   | grep -q ethtoo || apt-get install -y ethtool
-command -v iperf     | grep -q iperf  || apt-get install -y iperf
-command -v iperf3    | grep -q iperf3 || apt-get install -y iperf3
+    command -v ifconfig  | grep -q ifcon  || apt-get install -y net-tools
+    command -v ethtool   | grep -q ethtoo || apt-get install -y ethtool
+    command -v iperf     | grep -q iperf  || apt-get install -y iperf
+    command -v iperf3    | grep -q iperf3 || apt-get install -y iperf3
 }
 
 function show_headers() {
-echo -e "${bold}Kernel and headers installed in your system${yellow}"
-echo $kernel
-dpkg -l | grep linux-headers | grep $kernelvvv | awk '{print $2}'
-echo -e "${normal}"
+    echo -e "${bold}Kernel and headers installed in your system${yellow}"
+    echo $kernel
+    dpkg -l | grep linux-headers | grep $kernelvvv | awk '{print $2}'
+    echo -e "${normal}"
 }
 
 function show_iface() {
-echo -e "${bold}The followings are details about your current interface${yellow}"
-echo "Interface: $interface"
-ethtool -i $interface
-echo -e "${normal}"
+    echo -e "${bold}The followings are details about your current interface${yellow}"
+    echo "Interface: $interface"
+    ethtool -i $interface
+    echo -e "${normal}"
 }
 
 function kill_appex() {
-[[ -f /appex/bin/serverSpeeder.sh ]] && { /appex/bin/serverSpeeder.sh  stop ; /appex/bin/serverSpeeder.sh  status ; ruisu=y ; }
-[[ -f /appex/bin/lotServer.sh     ]] && { /appex/bin/lotServer.sh      stop ; /appex/bin/lotServer.sh      status ; ruisu=y ; }
-[[ -z $ruisu ]] && echo -e "\n${red}No ServerSpeeder or LotServer Found${normal}\n" || echo -e "\n${red}ServerSpeeder or LotServer has been shut down ...${normal}\n"
+    [[ -f /appex/bin/serverSpeeder.sh ]] && { /appex/bin/serverSpeeder.sh  stop ; /appex/bin/serverSpeeder.sh  status ; ruisu=y ; }
+    [[ -f /appex/bin/lotServer.sh     ]] && { /appex/bin/lotServer.sh      stop ; /appex/bin/lotServer.sh      status ; ruisu=y ; }
+    [[ -z $ruisu ]] && echo -e "\n${red}No ServerSpeeder or LotServer Found${normal}\n" || echo -e "\n${red}ServerSpeeder or LotServer has been shut down ...${normal}\n"
 }
 
 function ask_iperf() {
-echo
-read -ep "${bold}${red}Would you like to do iperf test? [Y/n]${normal} " responce
-case $responce in
-    [yY] | [yY][Ee][Ss] | "") do_iperf ;;
-    [nN] | [nN][Oo]         ) sleep 0  ;;
-    *                       ) do_iperf ;;
-esac
+    echo
+    read -ep "${bold}${red}Would you like to do iperf test? [Y/n]${normal} " responce
+    case $responce in
+        [yY] | [yY][Ee][Ss] | "") do_iperf ;;
+        [nN] | [nN][Oo]         ) sleep 0  ;;
+        *                       ) do_iperf ;;
+    esac
 }
 
 function do_iperf() {
-echo -e "\n${bold}${cyan}iperf -c iperf.ovh.net -i 1 -t 4${normal}"
-iperf -c iperf.ovh.net -i 1 -t 4
-echo -e "\n${bold}${cyan}iperf3 -c ping-ams1.online.net -p 5203 -t 4${normal}"
-iperf3 -c ping-ams1.online.net -p 5203 -t 4
-echo -e "\n${bold}${cyan}iperf3 -c bouygues.testdebit.info -p 5203 -4 -t 4${normal}"
-iperf3 -c bouygues.testdebit.info -p 5203 -4 -t 4
-echo -e "\n${bold}${cyan}DONE${normal}\n"
+    echo -e "\n${bold}${cyan}iperf -c iperf.ovh.net -i 1 -t 4${normal}"
+    iperf -c iperf.ovh.net -i 1 -t 4
+    echo -e "\n${bold}${cyan}iperf3 -c ping-ams1.online.net -p 5203 -t 4${normal}"
+    iperf3 -c ping-ams1.online.net -p 5203 -t 4
+    echo -e "\n${bold}${cyan}iperf3 -c bouygues.testdebit.info -p 5203 -4 -t 4${normal}"
+    iperf3 -c bouygues.testdebit.info -p 5203 -4 -t 4
+    echo -e "\n${bold}${cyan}DONE${normal}\n"
 }
 
 ####################################################################################################
 
 function r8168_driver() {
-# read -ep "${bold}确定 headers 已经安装、内核已安装并重启过了？${normal}"
-for app in firmware-realtek dkms ; do
-    dpkg -l | grep $app -q && apt-get purge -y $app
-done
+    # read -ep "${bold}确定 headers 已经安装、内核已安装并重启过了？${normal}"
+    for app in firmware-realtek dkms ; do
+        dpkg -l | grep $app -q && apt-get purge -y $app
+    done
 
-apt-get update && apt-get install build-essential libelf-dev -y ; echo
-wget -O 10086 https://sourceforge.net/projects/aboxx/files/r8168/r8168-8.046.00.tar.bz2/download
-tar xfvj 10086 ; rm -rf 10086 ; cd r8168-8.046.00
-{ ./autorun.sh || modprobe r8169 ; } 2>&1 | tee /log/r8168.log 
-cd .. ; rm -rf r8168-8.046.00
+    apt-get update && apt-get install build-essential libelf-dev -y ; echo
+    wget -O 10086 https://sourceforge.net/projects/aboxx/files/r8168/r8168-8.046.00.tar.bz2/download
+    tar xfvj 10086 ; rm -rf 10086 ; cd r8168-8.046.00
+    { ./autorun.sh || modprobe r8169 ; } 2>&1 | tee /log/r8168.log 
+    cd .. ; rm -rf r8168-8.046.00
 
-[[ $reboot == y ]] && { reboot -f ; init 6 ; }
-show_iface
-ask_iperf
+    [[ $reboot == y ]] && { reboot -f ; init 6 ; }
+    show_iface
+    ask_iperf
 }
 
 ####################################################################################################
 
 function r8168_dkms() {
-for app in firmware-realtek dkms ; do
-    dpkg -l | grep $app -q && apt-get purge -y $app
-done
+    for app in firmware-realtek dkms ; do
+        dpkg -l | grep $app -q && apt-get purge -y $app
+    done
 
-apt-get update && apt-get install -y dkms | tee /log/r8168.log 
+    apt-get update && apt-get install -y dkms | tee /log/r8168.log 
 
-[[ $CODENAME == bionic  ]] && export headers_list="$(apt-cache search linux-image-4.15.0.*generic | sort | tail -1 | awk '{print $1}')         $(apt-cache search linux-headers-4.15.0.*generic | sort | tail -1 | awk '{print $1}')"
-[[ $CODENAME == xenial  ]] && export headers_list="$(apt-cache search linux-image-4.4.0.*generic  | sort | tail -1 | awk '{print $1}')         $(apt-cache search linux-headers-4.4.0.*generic  | sort | tail -1 | awk '{print $1}')"
-[[ $CODENAME == jessie  ]] && export headers_list="$(apt-cache search linux-image-3.16.0.*amd64   | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')        $(apt-cache search linux-headers-3.16.0.*amd64 | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')"
-[[ $CODENAME == stretch ]] && export headers_list="$(apt-cache search linux-image-4.9.0.*amd64    | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')        $(apt-cache search linux-headers-4.9.0.*amd64  | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')"
-[[ $CODENAME == buster  ]] && export headers_list="$(apt-cache search linux-image-4.19.0.*amd64   | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')        $(apt-cache search linux-headers-4.19.0.*amd64 | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')"
+    if [[ $CODENAME == bionic  ]]; then
+        headers_list="$(apt-cache search linux-image-4.15.0.*generic | sort | tail -1 | awk '{print $1}')         $(apt-cache search linux-headers-4.15.0.*generic | sort | tail -1 | awk '{print $1}')"
+    elif [[ $CODENAME == xenial  ]]; then
+        headers_list="$(apt-cache search linux-image-4.4.0.*generic  | sort | tail -1 | awk '{print $1}')         $(apt-cache search linux-headers-4.4.0.*generic  | sort | tail -1 | awk '{print $1}')"
+    elif [[ $CODENAME == jessie  ]]; then
+        headers_list="$(apt-cache search linux-image-3.16.0.*amd64   | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')        $(apt-cache search linux-headers-3.16.0.*amd64 | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')"
+    elif [[ $CODENAME == stretch ]]; then
+        headers_list="$(apt-cache search linux-image-4.9.0.*amd64    | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')        $(apt-cache search linux-headers-4.9.0.*amd64  | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')"
+    elif [[ $CODENAME == buster  ]]; then
+        headers_list="$(apt-cache search linux-image-4.19.0.*amd64   | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')        $(apt-cache search linux-headers-4.19.0.*amd64 | grep -Ev "rt|cloud|unsigned|dbg" | sort | tail -1 | awk '{print $1}')"
+    fi
 
-apt-get purge -y $headers_list
-wget https://sourceforge.net/projects/aboxx/files/r8168/r8168-dkms_8.040.00-1_all.deb/download -O r8168-dkms_8.040.00-1_all.deb
-dpkg -i r8168-dkms_8.040.00-1_all.deb
-rm -f r8168-dkms_8.040.00-1_all.deb
+    [[ -n "$headers_list" ]] && apt-get purge -y "$headers_list"
+    wget https://sourceforge.net/projects/aboxx/files/r8168/r8168-dkms_8.040.00-1_all.deb/download -O r8168-dkms_8.040.00-1_all.deb
+    dpkg -i r8168-dkms_8.040.00-1_all.deb
+    rm -f r8168-dkms_8.040.00-1_all.deb
 
-[[ $reboot == y ]] && { reboot -f ; init 6 ; }
-show_iface
-ask_iperf
+    [[ $reboot == y ]] && { reboot -f ; init 6 ; }
+    show_iface
+    ask_iperf
 }
 
 
