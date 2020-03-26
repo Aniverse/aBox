@@ -3,8 +3,8 @@
 # https://github.com/Aniverse/aBox
 # Author: Aniverse
 #
-script_update=2020.03.18
-script_version=r31213
+script_update=2020.03.26
+script_version=r31214
 ################################################################################################
 
 usage_guide() {
@@ -256,7 +256,7 @@ network:
     $interface:
       dhcp4: no
       dhcp6: no
-      addresses: [$AAA.$BBB.$CCC.$DDD/24, '2400:c70:1:$AAA:$BBB:$CCC:$DDD:1/96']
+      addresses: [$AAA.$BBB.$CCC.$DDD/24, '2a00:c70:1:$AAA:$BBB:$CCC:$DDD:1/96']
       gateway4: $AAA.$BBB.$CCC.1
       gateway6: 2a00:c70:1:$AAA:$BBB:$CCC::1
       nameservers:
@@ -878,7 +878,7 @@ function references() {
 # https://ymgblog.com/2018/03/12/345/
 # https://www.timelate.com/archives/add-ipv6-address-for-ikoula-ubuntu-18-04-dedicated-server.html
 # https://documentation.online.net/en/dedicated-server/network/ipv6/prefix
-# https://en-wiki.ikoula.com/en/How_to_calculate_my_IPV6
+# https://fr-wiki.ikoula.com/fr/Comment_calculer_mon_IPV6
 # https://kb.leaseweb.com/support/support-procedures/adding-an-ipv6-address-to-your-server#AddinganIPv6addresstoyourserver-ConfigureIPv6onDebian/Ubuntu
 sleep 0
 }
