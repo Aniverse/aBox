@@ -3,8 +3,8 @@
 # https://github.com/Aniverse/aBox
 # Author: Aniverse
 #
-script_update=2020.03.26
-script_version=r31214
+script_update=2020.03.28
+script_version=r31215
 ################################################################################################
 
 usage_guide() {
@@ -263,6 +263,7 @@ network:
         addresses: [213.246.36.14,213.246.33.144,80.93.83.11]
 EOF
     netplan apply
+    sleep 5
 }
 
 
@@ -386,6 +387,7 @@ EOF
     systemctl start dhclient.service
     systemctl start dhclient-netplan.service
     netplan apply
+    sleep 5
 }
 
 
@@ -545,6 +547,7 @@ function leaseweb_netplan() {
 ### IPv6_Script END ###
 EOF
     netplan apply
+    sleep 5
     echo -e "DONE"
 }
 
