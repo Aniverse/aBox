@@ -28,22 +28,21 @@ flexgettt
 
 bench 测试脚本，支持硬盘 4K 性能测试、独服硬盘通电时间检测
 ```
-bash <(wget -qO- https://git.io/ceshi)
+bash <(wget -qO- git.io/ceshi)
 ```
 
 锐速、bbr、魔改 bbr、bbrplus 脚本
 ```
-bash <(wget -qO- https://git.io/AccTCP)
+bash <(wget -qO- git.io/AccTCP)
 ```
 
 inexistence 客户端安装脚本
 ```
-bash <(wget -qO- https://git.io/abcde)
+bash <(wget -qO- git.io/abcde)
 ```
 
 自动挂载 ISO、扫 BDinfo、截图脚本
 ```
-wget -qO /usr/local/bin/bluray https://github.com/Aniverse/bluray/raw/master/bluray
-chmod +x /usr/local/bin/bluray
+bash <(wget -qO- git.io/bluray) -u
 bluray
 ```
