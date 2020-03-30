@@ -1,0 +1,68 @@
+#!/bin/sh
+# A mountall script from Scaleway Dedibox
+
+if [ $( whoami ) != "root" ]; then
+  echo "You need to have root privilege"
+  exit 1
+fi
+
+is_inlist () {
+  OIFS=$IFS
+  IFS=:
+  for i in $2; do
+    if [ "$i" -a "$1" = "$i" ]; then
+      IFS=$OIFS
+      echo 1
+      return
+    fi
+  done
+  IFS=$OIFS
+  echo 0
+}
+
+is_swap () {
+  magic=$(/bin/dd if="$1" bs=4086 skip=1 count=1 2>/dev/null | /bin/dd bs=10 count=1 2>/dev/null)
+  if [ "$magic" = "SWAPSPACE2" -o "$magic" = "SWAP-SPACE" ]; then
+    echo 1
+    return
+  fi
+  echo 0
+}
+
+mdlist=""
+rdlist=""
+sdlist=""
+
+for mddev in $( ls /dev/md[0-9]* ); do
+  mdlist="${mdlist} ${mddev}"
+  for line in $( mdadm --detail $mddev ); do
+     rddev=$( echo $line | awk '/\/dev\/sd/ {print $1}' )
+     if [ -n "$rddev" ]; then
+       rdlist="${rddev}:${rdlist}"
+     fi
+  done
+done
+
+for sddev in $( ls /dev/sd[a-z][0-9]* ); do
+  if [ $( is_inlist $sddev $rdlist ) -eq 0 ]; then
+    if [ $( is_swap $sddev ) -eq 0 ]; then
+      sdlist="${sdlist} ${sddev}"
+    else
+      echo "$sddev looks like a SWAP space and therefore will not be mounted."
+    fi
+  else
+    echo "$sddev is part of a RAID array and therefore will not be mounted."
+  fi
+done
+
+for part in ${mdlist} ${sdlist}; do
+  mkdir -p /mnt/${part#/dev/} 2>/dev/null
+  mount -t auto ${part} /mnt/${part#/dev/} 2>/dev/null
+  if [ $? -eq 0 ]; then
+    echo "${part} has just been mounted in /mnt/${part#/dev/}"
+  else
+    echo "${part} cannot be mounted."
+  fi
+done
+
+exit 0
