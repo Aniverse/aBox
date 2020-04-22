@@ -4,8 +4,8 @@
 
 ####################################################################################################
 
-script_update=2020.03.24
-script_version=r20018
+script_update=2020.04.22
+script_version=r20019
 
 ####################################################################################################
 usage_guide() {
@@ -109,8 +109,8 @@ function r8168_driver() {
         dpkg -l | grep $app -q && apt-get purge -y $app
     done
 
-    apt-get update && apt-get install build-essential libelf-dev -y ; echo
-    wget -O 10086 https://sourceforge.net/projects/aboxx/files/r8168/r8168-8.046.00.tar.bz2/download
+    apt-get update && apt-get install -y build-essential libelf-dev ; echo
+    wget -O 10086 https://github.com/Aniverse/inexistence-files/raw/master/firmware/r8168-8.046.00.tar.bz2
     tar xfvj 10086 ; rm -rf 10086 ; cd r8168-8.046.00
     # https://community.hetzner.com/tutorials/installing-the-r8168-driver?title=Installation_des_r8168-Treibers/en
     make modules
@@ -145,7 +145,7 @@ function r8168_dkms() {
     fi
 
     [[ -n "$headers_list" ]] && apt-get purge -y "$headers_list"
-    wget https://sourceforge.net/projects/aboxx/files/r8168/r8168-dkms_8.040.00-1_all.deb/download -O r8168-dkms_8.040.00-1_all.deb
+    wget https://github.com/Aniverse/inexistence-files/raw/master/firmware/r8168-dkms_8.040.00-1_all.deb -O r8168-dkms_8.040.00-1_all.deb
     dpkg -i r8168-dkms_8.040.00-1_all.deb
     rm -f r8168-dkms_8.040.00-1_all.deb
 
