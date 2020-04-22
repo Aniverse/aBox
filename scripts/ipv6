@@ -3,8 +3,8 @@
 # https://github.com/Aniverse/aBox
 # Author: Aniverse
 #
-script_update=2020.03.28
-script_version=r31215
+script_update=2020.04.12
+script_version=r31216
 ################################################################################################
 
 usage_guide() {
@@ -649,25 +649,27 @@ interface=$interface
 type=$type
 "
     lines
-    echo -e "\n${yellow}cat /etc/network/interfaces${normal}\n"
-    cat /etc/network/interfaces           2>/dev/null
-    lines
-    if [[ -f /etc/netplan/01-netcfg.yaml ]]; then
+    if [[ -s etc/network/interfaces ]]; then
+        echo -e "\n${yellow}cat /etc/network/interfaces${normal}\n"
+        cat /etc/network/interfaces       2>/dev/null
+        lines
+    fi
+    if [[ -s /etc/netplan/01-netcfg.yaml ]]; then
         echo -e "\n${yellow}cat /etc/netplan/01-netcfg.yaml${normal}\n"
         cat /etc/netplan/01-netcfg.yaml   2>/dev/null
         lines
     fi
-    if [[ -f /etc/dibbler/client.conf ]]; then
+    if [[ -s /etc/dibbler/client.conf ]]; then
         echo -e "\n${yellow}cat /etc/dibbler/client.conf${normal}\n"
         cat /etc/dibbler/client.conf      2>/dev/null
         lines
     fi
-    if [[ -f /var/lib/dibbler/client-duid ]]; then
+    if [[ -s /var/lib/dibbler/client-duid ]]; then
         echo -e "\n${yellow}cat /var/lib/dibbler/client-duid${normal}\n"
         cat /var/lib/dibbler/client-duid  2>/dev/null
         lines
     fi
-    if [[ -f /etc/systemd/system/odhcp6c.service ]]; then
+    if [[ -s /etc/systemd/system/odhcp6c.service ]]; then
         echo -e "\n${yellow}cat /etc/systemd/system/odhcp6c.service${normal}\n"
         cat /etc/systemd/system/odhcp6c.service   2>/dev/null
         lines
