@@ -2,8 +2,8 @@
 # Author: Aniverse
 # https://github.com/Aniverse/aBox
 
-script_update=2020.03.20
-script_version=r10115
+script_update=2020.05.09
+script_version=r10116
 
 ########################################################################################################
 
@@ -62,7 +62,7 @@ black='\033[0;30m'   ; red='\033[0;31m' ; green='\033[0;32m' ; yellow='\033[0;33
 magenta='\033[0;35m' ; cyan='\033[0;36m'; white='\033[0;37m' ; normal='\033[0m'    ; bold='\033[1m'
 on_red='\033[41;37m' ; on_cyan='\033[46;37m' ; heihuangse='\033[43;30m'
 
-[[ ! -w "$log" ]] && { mkdir -p "$(dirname "$log")" ; touch "$log" ; chmod 666 "$log" ; }
+[[ ! -w "$log" ]] && { mkdir -p "$(dirname "$log")" ; touch "$log" ; chmod -R 777 "$(dirname "$log")" ; }
 
 # split -b 65535000 -d -a 4 input ouptput_$(date "+%Y-%m-%d")
 # $(date "+%Y-%m-%d %H:%M")
@@ -105,7 +105,7 @@ flexget_log() {
 }
 
 log_serach() {
-    grep -C5 "$keyword" $log | head -100
+    grep -i "$keyword" $log | head -100
     echo -e "\n${on_red}grep -C5 \"$keyword\" $log${normal}\n"
 }
 
@@ -134,7 +134,7 @@ flexget_add2cron() {
         if [[ $interval -gt 0 ]] ; then
             cronline="*/$interval * * * * $S_Path -n"
             cronline2="0 0 * * * $S_Path --log-backup"
-            (crontab -u $user -l ; echo "$cronline" ) | crontab -u $user -
+            (crontab -u $user -l ; echo "$cronline"  ) | crontab -u $user -
             (crontab -u $user -l ; echo "$cronline2" ) | crontab -u $user -
             echo -e "\n${green}${bold}Flexget crontab enabled${normal}\n"
         else
