@@ -4,7 +4,7 @@
 # Author: Aniverse
 #
 script_update=2020.05.23
-script_version=r31217
+script_version=r31218
 ################################################################################################
 
 usage_guide() {
@@ -782,10 +782,8 @@ ${bold}${on_magenta}             IPv6 配置脚本             ${jiacu}
 
 IPv4 地址             ${cyan}$serveripv4${jiacu}
 IPv6 地址             ${cyan}$serveripv6_show${jiacu}
-反向域名              ${cyan}$ipip_rDNS${jiacu}
-运营商                ${cyan}$ipip_ISP${jiacu}
-AS  信息              ${cyan}$ipip_ASN, $ipip_AS${jiacu}
-地理位置              ${cyan}$ipip_Loc${jiacu}
+ASN 信息              ${green}$asnnnnn, $isppppp${jiacu}
+地理位置              ${green}$country, $regionn, $cityyyy${jiacu}
 
 操作系统              ${cyan}$DISTRO $osversion $CODENAME${jiacu}
 系统支持性            ${cyan}$SysSupport${jiacu}
