@@ -4,8 +4,8 @@
 
 ####################################################################################################
 
-script_update=2020.04.22
-script_version=r20019
+script_update=2020.06.17
+script_version=r20020
 
 ####################################################################################################
 usage_guide() {
@@ -55,6 +55,7 @@ mkdir -p /log
 ####################################################################################################
 
 function check_apps() {
+    echo -e "${bold}Checking necessary dependency ...${normal}"
     command -v ifconfig  | grep -q ifcon  || apt-get install -y net-tools
     command -v ethtool   | grep -q ethtoo || apt-get install -y ethtool
     command -v iperf     | grep -q iperf  || apt-get install -y iperf
@@ -114,7 +115,7 @@ function r8168_driver() {
     tar xfvj 10086 ; rm -rf 10086 ; cd r8168-8.046.00
     # https://community.hetzner.com/tutorials/installing-the-r8168-driver?title=Installation_des_r8168-Treibers/en
     make modules
-    read -ep "Pree ENTER to continue "
+    echo ; read -ep "${bold}Press ${baihongse}ENTER${jiacu} to continue ${normal}"
     { ./autorun.sh || modprobe r8169 ; } 2>&1 | tee /log/r8168.log 
     cd .. ; rm -rf r8168-8.046.00
 
