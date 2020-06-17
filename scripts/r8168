@@ -5,13 +5,13 @@
 ####################################################################################################
 
 script_update=2020.06.17
-script_version=r21022
+script_version=r21023
 
 ####################################################################################################
 usage_guide() {
 bash <(wget -qO- https://github.com/Aniverse/aBox/raw/master/scripts/r8168)
 s=/usr/local/bin/r8168 ; rm -f $s ; nano $s ; chmod 755 $s
-# apt-get install r8168-dkms
+# apt-get install -y r8168-dkms
 }
 
 ####################################################################################################
@@ -221,9 +221,9 @@ function r8168_autorun() {
     fi
 
     echo "DEPMOD $(uname -r)" | tee -a /log/r8168.log 
-    depmod `uname -r`
+    _excute "depmod $(uname -r)"
     echo "load module $module" | tee -a /log/r8168.log 
-    modprobe $module
+    _excute "modprobe $module"
 
     is_update_initramfs=n
     distrib_list="ubuntu debian"
@@ -241,7 +241,7 @@ function r8168_autorun() {
     if [ "$is_update_initramfs" = "y" ]; then
     	if which update-initramfs >/dev/null ; then
     		echo "Updating initramfs. Please wait." | tee -a /log/r8168.log 
-    		update-initramfs -u -k $(uname -r)
+    		_excute "update-initramfs -u -k $(uname -r)"
     	else
     		echo "update-initramfs: command not found" | tee -a /log/r8168.log 
     		exit 1
@@ -271,7 +271,7 @@ echo -e "${green}4)${normal} Install r8168 via dkms and then reboot"
 echo -e "${green}5)${normal} Compile r8168 driver using modified autorun.sh"
 echo -e "${green}6)${normal} rmmod r8169 and then reboot"
 echo -e "${green}99)${normal} Do iperf test"
-read -ep "${bold}${yellow}What would you like to do? ${normal}" responce
+read -ep "${bold}${yellow}What would you like to do ? ${normal}" responce
 case $responce in
     1 ) r8168_driver ;;
     2 ) r8168_dkms ;;
