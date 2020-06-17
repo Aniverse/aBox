@@ -5,7 +5,7 @@
 ####################################################################################################
 
 script_update=2020.06.17
-script_version=r20021
+script_version=r21022
 
 ####################################################################################################
 usage_guide() {
@@ -116,7 +116,11 @@ function r8168_driver() {
     # https://community.hetzner.com/tutorials/installing-the-r8168-driver?title=Installation_des_r8168-Treibers/en
     # make modules
     # echo ; read -ep "${bold}Press ${baihongse}ENTER${jiacu} to continue ${normal}"
-    { ./autorun.sh || modprobe r8169 ; } 2>&1 | tee /log/r8168.log 
+    if [[ $self == 1 ]]; then
+        r8168_autorun
+    else
+        { ./autorun.sh || modprobe r8169 ; } 2>&1 | tee -a /log/r8168.log
+    fi
     cd .. ; rm -rf r8168-8.046.00
 
     [[ $reboot == y ]] && { reboot -f ; init 6 ; }
@@ -131,7 +135,7 @@ function r8168_dkms() {
         dpkg -l | grep $app -q && apt-get purge -y $app
     done
 
-    apt-get update && apt-get install -y dkms | tee /log/r8168.log 
+    apt-get update && apt-get install -y dkms | tee -a /log/r8168.log 
 
     if [[ $CODENAME == bionic  ]]; then
         headers_list="$(apt-cache search linux-image-4.15.0.*generic | sort | tail -1 | awk '{print $1}')         $(apt-cache search linux-headers-4.15.0.*generic | sort | tail -1 | awk '{print $1}')"
@@ -156,11 +160,102 @@ function r8168_dkms() {
 }
 
 
+####################################################################################################
 
+function _excute() {
+	($1 2>&1 | tee -a /log/r8168.log )
+}
+
+function rmmod_old_driver(){
+    echo "Check old driver and unload it."
+    check=`lsmod | grep r8169`
+    if [ "$check" != "" ]; then
+            echo "rmmod r8169"
+            /sbin/rmmod r8169
+    fi
+    
+    check=`lsmod | grep r8168`
+    if [ "$check" != "" ]; then
+            echo "rmmod r8168"
+            /sbin/rmmod r8168
+    fi
+}
+
+function r8168_autorun() {
+    TARGET_PATH=$(find /lib/modules/$(uname -r)/kernel/drivers/net/ethernet -name realtek -type d)
+    if [ "$TARGET_PATH" = "" ]; then
+    	TARGET_PATH=$(find /lib/modules/$(uname -r)/kernel/drivers/net -name realtek -type d)
+    fi
+    if [ "$TARGET_PATH" = "" ]; then
+    	TARGET_PATH=/lib/modules/$(uname -r)/kernel/drivers/net
+    fi
+    echo
+
+    echo "Build the module and install"    | tee -a /log/r8168.log 
+    echo "-------------------------------" | tee -a /log/r8168.log 
+    _excute "date 1"
+    _excute "make $@ all"
+    module=`ls src/*.ko`
+    module=${module#src/}
+    module=${module%.ko}
+
+    if [ "$module" = "" ]; then
+    	echo "No driver exists!!!" | tee -a /log/r8168.log 
+    	exit 1
+    elif [ "$module" != "r8169" ]; then
+    	if test -e $TARGET_PATH/r8169.ko ; then
+    		echo "Backup r8169.ko" | tee -a /log/r8168.log 
+    		if test -e $TARGET_PATH/r8169.bak ; then
+    			i=0
+    			while test -e $TARGET_PATH/r8169.bak$i
+    			do
+    				i=$(($i+1))
+    			done
+    			echo "rename r8169.ko to r8169.bak$i" | tee -a /log/r8168.log 
+    			_excute "mv $TARGET_PATH/r8169.ko $TARGET_PATH/r8169.bak$i"
+    		else
+    			echo "rename r8169.ko to r8169.bak" | tee -a /log/r8168.log 
+    			_excute "mv $TARGET_PATH/r8169.ko $TARGET_PATH/r8169.bak"
+    		fi
+    	fi
+    fi
+
+    echo "DEPMOD $(uname -r)" | tee -a /log/r8168.log 
+    depmod `uname -r`
+    echo "load module $module" | tee -a /log/r8168.log 
+    modprobe $module
+
+    is_update_initramfs=n
+    distrib_list="ubuntu debian"
+
+    if [ -r /etc/debian_version ]; then
+    	is_update_initramfs=y
+    elif [ -r /etc/lsb-release ]; then
+    	for distrib in $distrib_list
+    	do
+    		/bin/grep -i "$distrib" /etc/lsb-release 2>&1 /dev/null && \
+    			is_update_initramfs=y && break
+    	done
+    fi
+
+    if [ "$is_update_initramfs" = "y" ]; then
+    	if which update-initramfs >/dev/null ; then
+    		echo "Updating initramfs. Please wait." | tee -a /log/r8168.log 
+    		update-initramfs -u -k $(uname -r)
+    	else
+    		echo "update-initramfs: command not found" | tee -a /log/r8168.log 
+    		exit 1
+    	fi
+    fi
+
+    echo "Completed." | tee -a /log/r8168.log 
+    exit 0
+}
 
 
 
 ####################################################################################################
+
 
 
 
@@ -173,16 +268,46 @@ echo -e "${green}1)${normal} Compile r8168 driver"
 echo -e "${green}2)${normal} Install r8168 via dkms"
 echo -e "${green}3)${normal} Compile r8168 driver and then reboot"
 echo -e "${green}4)${normal} Install r8168 via dkms and then reboot"
-echo -e "${green}5)${normal} Do iperf test"
+echo -e "${green}5)${normal} Compile r8168 driver using modified autorun.sh"
+echo -e "${green}6)${normal} rmmod r8169 and then reboot"
+echo -e "${green}99)${normal} Do iperf test"
 read -ep "${bold}${yellow}What would you like to do? ${normal}" responce
 case $responce in
     1 ) r8168_driver ;;
     2 ) r8168_dkms ;;
     3 ) reboot=y ; r8168_driver ;;
     4 ) reboot=y ; r8168_dkms ;;
-    5 ) do_iperf ;;
+    5 ) self=1   ; r8168_driver ;;
+    6 ) echo "rmmod r8169" ; /sbin/rmmod r8169 ; reboot -f ; init 6 ;;
+    99) do_iperf ;;
     * ) exit 1 ;;
 esac
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+####################################################################################################
+
+
+
+
+
+
+
+
 
 
 
