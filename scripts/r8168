@@ -5,7 +5,7 @@
 ####################################################################################################
 
 script_update=2020.06.17
-script_version=r20020
+script_version=r20021
 
 ####################################################################################################
 usage_guide() {
@@ -106,7 +106,7 @@ function do_iperf() {
 
 function r8168_driver() {
     # read -ep "${bold}确定 headers 已经安装、内核已安装并重启过了？${normal}"
-    for app in firmware-realtek dkms ; do
+    for app in dkms ; do # firmware-realtek
         dpkg -l | grep $app -q && apt-get purge -y $app
     done
 
@@ -114,8 +114,8 @@ function r8168_driver() {
     wget -O 10086 https://github.com/Aniverse/inexistence-files/raw/master/firmware/r8168-8.046.00.tar.bz2
     tar xfvj 10086 ; rm -rf 10086 ; cd r8168-8.046.00
     # https://community.hetzner.com/tutorials/installing-the-r8168-driver?title=Installation_des_r8168-Treibers/en
-    make modules
-    echo ; read -ep "${bold}Press ${baihongse}ENTER${jiacu} to continue ${normal}"
+    # make modules
+    # echo ; read -ep "${bold}Press ${baihongse}ENTER${jiacu} to continue ${normal}"
     { ./autorun.sh || modprobe r8169 ; } 2>&1 | tee /log/r8168.log 
     cd .. ; rm -rf r8168-8.046.00
 
