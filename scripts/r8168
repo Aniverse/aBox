@@ -5,13 +5,12 @@
 ####################################################################################################
 
 script_update=2020.06.18
-script_version=r22031
+script_version=r22032
 
 ####################################################################################################
 usage_guide() {
 bash <(wget -qO- https://github.com/Aniverse/aBox/raw/master/scripts/r8168)
 s=/usr/local/bin/r8168 ; rm -f $s ; nano $s ; chmod 755 $s
-# apt-get install -y r8168-dkms
 }
 
 ####################################################################################################
@@ -56,10 +55,13 @@ OutputLOG=/log/script/r8168.log
 
 ####################################################################################################
 
+function version_ge(){ test "$(echo "$@" | tr " " "\n" | sort -rV | head -1)" == "$1" ; }
+function version_gt(){ test "$(printf '%s\n' "$@" | sort -V | head -1)" != "$1"; }
+
 function apt_install_check() {
     unset apt_install_list
     packages=("$@")
-    [[ -z "$packages" ]] && echo "ERROR: No packages" | tee -a $OutputLOG&& exit 1
+    [[ -z "$packages" ]] && echo "ERROR: No packages" | tee -a $OutputLOG && exit 1
     for package in "${packages[@]}" ; do
         dpkg-query -W -f='${Status}' $package 2>/dev/null | grep -q "ok installed" || apt_install_list="$apt_install_list $package"
     done
@@ -90,6 +92,7 @@ function show_headers() {
     dpkg -l | grep linux-headers | awk '{print $2}'
     echo -n "${normal}"
     dpkg -l | grep linux-headers | grep $kernelvvv -q || echo -e "${bold}${baihongse}Warning${jiacu} No match headers found${normal}"
+    version_ge $kernelvvv 4.17 && echo -e "${bold}${baihongse}ATTENTION${jiacu} You do not need r8168 if your kernel is higher than 4.16${normal}"
     echo
 }
 
@@ -199,8 +202,6 @@ function r8168_dkms() {
 
 
 ####################################################################################################
-
-function version_gt(){ test "$(printf '%s\n' "$@" | sort -V | head -1)" != "$1"; }
 
 # https://github.com/JiangXL/ColorMapping/issues/1
 # https://www.reddit.com/r/linuxquestions/comments/903xwq/unable_to_compile_working_kernel_modules_anymore/
