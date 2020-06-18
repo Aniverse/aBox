@@ -193,7 +193,7 @@ function r8168_autorun() {
 
     echo "Build the module and install"    | tee -a /log/r8168.log 
     echo "-------------------------------" | tee -a /log/r8168.log 
-    _excute "date 1"
+    echo "$(date "+%Y%m%d.%H%M")" | tee -a /log/r8168.log 
     _excute "make $@ all"
     module=`ls src/*.ko`
     module=${module#src/}
@@ -224,6 +224,9 @@ function r8168_autorun() {
     _excute "depmod $(uname -r)"
     echo "load module $module" | tee -a /log/r8168.log 
     _excute "modprobe $module"
+    
+    echo "blacklist r8169" >> /etc/modprobe.d/blacklist.conf
+    echo "r8168" >> /etc/initramfs-tools/modules
 
     is_update_initramfs=n
     distrib_list="ubuntu debian"
@@ -351,7 +354,9 @@ Making new initrd.img-3.16.0-4-amd64
 update-initramfs....
 
 DKMS: install completed.
+
 ########################
+
 Check old driver and unload it.
 rmmod r8169
 Build the module and install
@@ -366,6 +371,22 @@ DEPMOD 4.19.51-xanmod26
 load module r8168
 Updating initramfs. Please wait.
 update-initramfs: Generating /boot/initrd.img-4.19.51-xanmod26
+Completed.
+
+######################## Debian 10 3.16.0-4, FAILED
+
+Backup r8169.ko
+rename r8169.ko to r8169.bak
+DEPMOD 3.16.0-4-amd64
+load module r8168
+modprobe: ERROR: could not insert 'r8168': Exec format error
+Updating initramfs. Please wait.
+update-initramfs: Generating /boot/initrd.img-3.16.0-4-amd64
+cryptsetup: ERROR: Couldn't resolve device rootfs
+cryptsetup: WARNING: The initramfs image may not contain cryptsetup binaries 
+    nor crypto modules. If that's on purpose, you may want to uninstall the 
+    'cryptsetup-initramfs' package in order to disable the cryptsetup initramfs 
+    integration and avoid this warning.
 Completed.
 }
 
