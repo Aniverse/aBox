@@ -5,7 +5,7 @@
 ####################################################################################################
 
 script_update=2020.06.18
-script_version=r21025
+script_version=r21026
 
 ####################################################################################################
 usage_guide() {
@@ -111,6 +111,7 @@ function r8168_driver() {
     done
 
     apt-get update && apt-get install -y build-essential libelf-dev ; echo
+    [[ $CODENAME == buster ]] && install_old_binutils
     rm -rf r8168-8.046.00.tar.bz2 r8168-8.046.00
     wget -O r8168-8.046.00.tar.bz2 https://github.com/Aniverse/inexistence-files/raw/master/firmware/r8168-8.046.00.tar.bz2
     tar xfvj r8168-8.046.00.tar.bz2; rm -rf r8168-8.046.00.tar.bz2 ; cd r8168-8.046.00
@@ -161,7 +162,25 @@ function r8168_dkms() {
 }
 
 
+
+
+
+
+
 ####################################################################################################
+
+
+
+# https://github.com/JiangXL/ColorMapping/issues/1
+# https://www.reddit.com/r/linuxquestions/comments/903xwq/unable_to_compile_working_kernel_modules_anymore/
+function install_old_binutils() {
+    echo -e "${bold}Downgrading binutils to 2.30-22 ...${normal}"
+	echo "deb http://snapshot.debian.org/archive/debian/20180625T120000Z/ sid main" > /etc/apt/sources.list.d/old.binutils.list
+	apt-get -o Acquire::Check-Valid-Until=false update
+	apt-get install -y --allow-downgrades binutils:amd64=2.30-22 binutils-common:amd64=2.30-22 binutils-dev:amd64=2.30-22 binutils-x86-64-linux-gnu:amd64=2.30-22 libbinutils:amd64=2.30-22
+    rm -f /etc/apt/sources.list.d/old.binutils.list
+    apt-get update
+}
 
 function _excute() {
 	($1 2>&1 | tee -a /log/r8168.log )
