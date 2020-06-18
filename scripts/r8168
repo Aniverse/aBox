@@ -5,7 +5,7 @@
 ####################################################################################################
 
 script_update=2020.06.18
-script_version=r22030
+script_version=r22031
 
 ####################################################################################################
 usage_guide() {
@@ -59,7 +59,7 @@ OutputLOG=/log/script/r8168.log
 function apt_install_check() {
     unset apt_install_list
     packages=("$@")
-    [[ -z "$packages" ]] && echo "ERROR: No packages" | tee -a $OutputLOG && exit 1
+    [[ -z "$packages" ]] && echo "ERROR: No packages" | tee -a $OutputLOG&& exit 1
     for package in "${packages[@]}" ; do
         dpkg-query -W -f='${Status}' $package 2>/dev/null | grep -q "ok installed" || apt_install_list="$apt_install_list $package"
     done
@@ -219,7 +219,7 @@ function install_old_binutils() {
 }
 
 function _excute() {
-	($1 2>&1 | tee -a $OutputLOG )
+	($1 2>&1 | tee -a $OutputLOG)
 }
 
 function rmmod_old_driver(){
@@ -247,39 +247,39 @@ function r8168_autorun() {
     fi
     echo
 
-    echo "Build the module and install"    | tee -a $OutputLOG 
-    echo "-------------------------------" | tee -a $OutputLOG 
-    echo "$(date "+%Y%m%d.%H%M")" | tee -a $OutputLOG 
+    echo "Build the module and install"    | tee -a $OutputLOG
+    echo "-------------------------------" | tee -a $OutputLOG
+    echo "$(date "+%Y%m%d.%H%M")" | tee -a $OutputLOG
     _excute "make $@ all"
     module=`ls src/*.ko`
     module=${module#src/}
     module=${module%.ko}
 
     if [ "$module" = "" ]; then
-    	echo "No driver exists!!!" | tee -a $OutputLOG 
+    	echo "No driver exists!!!" | tee -a $OutputLOG
     	exit 1
     elif [ "$module" != "r8169" ]; then
     	if test -e $TARGET_PATH/r8169.ko ; then
-    		echo "Backup r8169.ko" | tee -a $OutputLOG 
+    		echo "Backup r8169.ko" | tee -a $OutputLOG
     		if test -e $TARGET_PATH/r8169.bak ; then
     			i=0
     			while test -e $TARGET_PATH/r8169.bak$i
     			do
     				i=$(($i+1))
     			done
-    			echo "rename r8169.ko to r8169.bak$i" | tee -a $OutputLOG 
+    			echo "rename r8169.ko to r8169.bak$i" | tee -a $OutputLOG
     			_excute "mv $TARGET_PATH/r8169.ko $TARGET_PATH/r8169.bak$i"
     		else
-    			echo "rename r8169.ko to r8169.bak" | tee -a $OutputLOG 
+    			echo "rename r8169.ko to r8169.bak" | tee -a $OutputLOG
     			_excute "mv $TARGET_PATH/r8169.ko $TARGET_PATH/r8169.bak"
     		fi
     	fi
     fi
 
-    echo "DEPMOD $(uname -r)" | tee -a $OutputLOG 
+    echo "DEPMOD $(uname -r)" | tee -a $OutputLOG
     _excute "depmod $(uname -r)"
-    echo "load module $module" | tee -a $OutputLOG 
-    _excute "modprobe $module"
+    echo "load module $module" | tee -a $OutputLOG
+    modprobe $module 2>&1 | tee -a $OutputLOG || r8168_failed=yes
     
     echo "blacklist r8169" >> /etc/modprobe.d/blacklist.conf
     echo "r8168" >> /etc/initramfs-tools/modules
@@ -299,16 +299,19 @@ function r8168_autorun() {
 
     if [ "$is_update_initramfs" = "y" ]; then
     	if which update-initramfs >/dev/null ; then
-    		echo "Updating initramfs. Please wait." | tee -a $OutputLOG 
+    		echo "Updating initramfs. Please wait." | tee -a $OutputLOG
     		_excute "update-initramfs -u -k $(uname -r)"
     	else
-    		echo "update-initramfs: command not found" | tee -a $OutputLOG 
+    		echo "update-initramfs: command not found" | tee -a $OutputLOG
     		exit 1
     	fi
     fi
 
-    echo "Completed." | tee -a $OutputLOG 
-    exit 0
+    if [[ $r8168_failed == yes ]]; then
+        echo -e "${jiacu}${baihongse}ERROR${jiacu} FAILED 失败${normal}" | tee -a $OutputLOG
+    else
+        echo "Completed." | tee -a $OutputLOG
+    fi
 }
 
 
@@ -328,14 +331,14 @@ echo -e "${green}1)${normal} Compile r8168 driver using modified autorun.sh (rec
 echo -e "${green}2)${normal} Compile r8168 driver"
 echo -e "${green}3)${normal} Install r8168 via dkms"
 # echo -e "${green}6)${normal} rmmod r8169 and then reboot"
-echo -e "${green}99)${normal} Do iperf test"
+echo -e "${green}9)${normal} Do iperf test"
 read -ep "${bold}${yellow}What would you like to do? ${normal}" responce
 case $responce in
     1 ) self=1   ; r8168_driver ;;
     2 ) r8168_driver ;;
     3 ) r8168_dkms ;;
     6 ) echo "rmmod r8169" ; /sbin/rmmod r8169 ; reboot -f ; init 6 ;;
-    99) do_iperf ;;
+    9 ) do_iperf ;;
     * ) exit 1 ;;
 esac
 
