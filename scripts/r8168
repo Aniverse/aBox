@@ -5,7 +5,7 @@
 ####################################################################################################
 
 script_update=2020.06.18
-script_version=r21027
+script_version=r21028
 
 ####################################################################################################
 usage_guide() {
@@ -69,8 +69,9 @@ function show_headers() {
     echo -n "${yellow}"
     dpkg -l | grep linux-image   | awk '{print $2}'
     dpkg -l | grep linux-headers | awk '{print $2}'
-    echo -e "${normal}"
+    echo -n "${normal}"
     dpkg -l | grep linux-headers | grep $kernelvvv -q || echo -e "${bold}${baihongse}Warning${jiacu} No match headers found${normal}"
+    echo
 }
 
 function show_iface() {
@@ -80,7 +81,7 @@ function show_iface() {
     else
         echo -e "Interface: $wangka1"
     fi
-    echo -e "${normal}${bold}ethtool -i $interfacee${yellow}"
+    echo -e "${normal}${bold}ethtool -i $interface${yellow}"
     ethtool -i $interface
     echo -e "${normal}"
 }
@@ -303,7 +304,7 @@ echo -e "${green}4)${normal} Install r8168 via dkms and then reboot"
 echo -e "${green}5)${normal} Compile r8168 driver using modified autorun.sh"
 echo -e "${green}6)${normal} rmmod r8169 and then reboot"
 echo -e "${green}99)${normal} Do iperf test"
-read -ep "${bold}${yellow}What would you like to do ? ${normal}" responce
+read -ep "${bold}${yellow}What would you like to do? ${normal}" responce
 case $responce in
     1 ) r8168_driver ;;
     2 ) r8168_dkms ;;
