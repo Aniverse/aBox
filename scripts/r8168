@@ -4,8 +4,8 @@
 
 ####################################################################################################
 
-script_update=2020.06.17
-script_version=r21023
+script_update=2020.06.18
+script_version=r21025
 
 ####################################################################################################
 usage_guide() {
@@ -111,8 +111,9 @@ function r8168_driver() {
     done
 
     apt-get update && apt-get install -y build-essential libelf-dev ; echo
-    wget -O 10086 https://github.com/Aniverse/inexistence-files/raw/master/firmware/r8168-8.046.00.tar.bz2
-    tar xfvj 10086 ; rm -rf 10086 ; cd r8168-8.046.00
+    rm -rf r8168-8.046.00.tar.bz2 r8168-8.046.00
+    wget -O r8168-8.046.00.tar.bz2 https://github.com/Aniverse/inexistence-files/raw/master/firmware/r8168-8.046.00.tar.bz2
+    tar xfvj r8168-8.046.00.tar.bz2; rm -rf r8168-8.046.00.tar.bz2 ; cd r8168-8.046.00
     # https://community.hetzner.com/tutorials/installing-the-r8168-driver?title=Installation_des_r8168-Treibers/en
     # make modules
     # echo ; read -ep "${bold}Press ${baihongse}ENTER${jiacu} to continue ${normal}"
