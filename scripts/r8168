@@ -5,7 +5,7 @@
 ####################################################################################################
 
 script_update=2020.06.18
-script_version=r22029
+script_version=r22030
 
 ####################################################################################################
 usage_guide() {
@@ -323,20 +323,17 @@ kill_appex
 show_iface
 show_headers
 
-echo -e "${green}1)${normal} Compile r8168 driver"
-echo -e "${green}2)${normal} Install r8168 via dkms"
-echo -e "${green}3)${normal} Compile r8168 driver and then reboot"
-echo -e "${green}4)${normal} Install r8168 via dkms and then reboot"
-echo -e "${green}5)${normal} Compile r8168 driver using modified autorun.sh"
-echo -e "${green}6)${normal} rmmod r8169 and then reboot"
+echo -e "$script_update ($script_version)"
+echo -e "${green}1)${normal} Compile r8168 driver using modified autorun.sh (recommend)"
+echo -e "${green}2)${normal} Compile r8168 driver"
+echo -e "${green}3)${normal} Install r8168 via dkms"
+# echo -e "${green}6)${normal} rmmod r8169 and then reboot"
 echo -e "${green}99)${normal} Do iperf test"
 read -ep "${bold}${yellow}What would you like to do? ${normal}" responce
 case $responce in
-    1 ) r8168_driver ;;
-    2 ) r8168_dkms ;;
-    3 ) reboot=y ; r8168_driver ;;
-    4 ) reboot=y ; r8168_dkms ;;
-    5 ) self=1   ; r8168_driver ;;
+    1 ) self=1   ; r8168_driver ;;
+    2 ) r8168_driver ;;
+    3 ) r8168_dkms ;;
     6 ) echo "rmmod r8169" ; /sbin/rmmod r8169 ; reboot -f ; init 6 ;;
     99) do_iperf ;;
     * ) exit 1 ;;
@@ -375,6 +372,7 @@ esac
 
 
 function Notes() {
+# the followings are dkms logs
 ############ Debian 9 ############
 dh-python distro-info-data file libmagic-mgc libmagic1 libmpdec2 libpython3-stdlib libpython3.5-minimal
 libpython3.5-stdlib linux-compiler-gcc-6-x86 linux-headers-4.9.0-8-amd64 linux-headers-4.9.0-8-common
