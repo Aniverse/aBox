@@ -5,7 +5,7 @@
 ####################################################################################################
 
 script_update=2020.06.18
-script_version=r21028
+script_version=r22029
 
 ####################################################################################################
 usage_guide() {
@@ -51,16 +51,35 @@ else
     interface=$wangka1
 fi
 
-mkdir -p /log
+mkdir -p /log/script
+OutputLOG=/log/script/r8168.log
 
 ####################################################################################################
 
+function apt_install_check() {
+    unset apt_install_list
+    packages=("$@")
+    [[ -z "$packages" ]] && echo "ERROR: No packages" | tee -a $OutputLOG && exit 1
+    for package in "${packages[@]}" ; do
+        dpkg-query -W -f='${Status}' $package 2>/dev/null | grep -q "ok installed" || apt_install_list="$apt_install_list $package"
+    done
+}
+
+function apt_install_together() {
+    if [[ -n "$apt_install_list" ]]; then
+        apt-get update 2>&1 | tee -a "$OutputLOG"
+        eval DEBIAN_FRONTEND=noninteractive apt-get -y --allow-unauthenticated -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install "$apt_install_list" >> "$OutputLOG" 2>&1
+        if [ ! $? = 0 ]; then
+            echo -e "ERROR: Failed to install packages" 2>&1 | tee -a "$OutputLOG"
+            exit 1
+        fi
+    fi
+}
+
 function check_apps() {
     echo -e "${bold}Checking necessary dependency ...${normal}"
-    command -v ifconfig  | grep -q ifcon  || apt-get install -y net-tools
-    command -v ethtool   | grep -q ethtoo || apt-get install -y ethtool
-    command -v iperf     | grep -q iperf  || apt-get install -y iperf
-    command -v iperf3    | grep -q iperf3 || apt-get install -y iperf3
+    apt_install_check net-tools ethtool iperf iperf3
+    apt_install_together
 }
 
 function show_headers() {
@@ -120,8 +139,10 @@ function r8168_driver() {
         dpkg -l | grep $app -q && apt-get purge -y $app
     done
 
-    apt-get update && apt-get install -y build-essential libelf-dev ; echo
+    apt_install_check     build-essential   libelf-dev
+    apt_install_together
     [[ $CODENAME == buster ]] && install_old_binutils
+
     rm -rf r8168-8.046.00.tar.bz2 r8168-8.046.00
     wget -O r8168-8.046.00.tar.bz2 https://github.com/Aniverse/inexistence-files/raw/master/firmware/r8168-8.046.00.tar.bz2
     tar xfvj r8168-8.046.00.tar.bz2; rm -rf r8168-8.046.00.tar.bz2 ; cd r8168-8.046.00
@@ -131,7 +152,7 @@ function r8168_driver() {
     if [[ $self == 1 ]]; then
         r8168_autorun
     else
-        { ./autorun.sh || modprobe r8169 ; } 2>&1 | tee -a /log/r8168.log
+        { ./autorun.sh || modprobe r8169 ; } 2>&1 | tee -a $OutputLOG
     fi
     cd .. ; rm -rf r8168-8.046.00
 
@@ -147,7 +168,7 @@ function r8168_dkms() {
         dpkg -l | grep $app -q && apt-get purge -y $app
     done
 
-    apt-get update && apt-get install -y dkms | tee -a /log/r8168.log 
+    apt-get update && apt-get install -y dkms | tee -a $OutputLOG
 
     if [[ $CODENAME == bionic  ]]; then
         headers_list="$(apt-cache search linux-image-4.15.0.*generic | sort | tail -1 | awk '{print $1}')         $(apt-cache search linux-headers-4.15.0.*generic | sort | tail -1 | awk '{print $1}')"
@@ -179,21 +200,26 @@ function r8168_dkms() {
 
 ####################################################################################################
 
-
+function version_gt(){ test "$(printf '%s\n' "$@" | sort -V | head -1)" != "$1"; }
 
 # https://github.com/JiangXL/ColorMapping/issues/1
 # https://www.reddit.com/r/linuxquestions/comments/903xwq/unable_to_compile_working_kernel_modules_anymore/
 function install_old_binutils() {
-    echo -e "${bold}Downgrading binutils to 2.30-22 ...${normal}"
-	echo "deb http://snapshot.debian.org/archive/debian/20180625T120000Z/ sid main" > /etc/apt/sources.list.d/old.binutils.list
-	apt-get -o Acquire::Check-Valid-Until=false update
-	apt-get install -y --allow-downgrades binutils:amd64=2.30-22 binutils-common:amd64=2.30-22 binutils-dev:amd64=2.30-22 binutils-x86-64-linux-gnu:amd64=2.30-22 libbinutils:amd64=2.30-22
-    rm -f /etc/apt/sources.list.d/old.binutils.list
-    apt-get update
+    if version_gt $(dpkg-query -W binutils | awk '{print $NF}') 2.30-22 ; then
+        echo -e "${bold}Downgrading binutils to 2.30-22 ...${normal}"
+	    echo "deb http://snapshot.debian.org/archive/debian/20180625T120000Z/ sid main" > /etc/apt/sources.list.d/old.binutils.list
+	    apt-get -o Acquire::Check-Valid-Until=false update
+	    apt-get install -y --allow-downgrades binutils:amd64=2.30-22 binutils-common:amd64=2.30-22 binutils-dev:amd64=2.30-22 binutils-x86-64-linux-gnu:amd64=2.30-22 libbinutils:amd64=2.30-22
+        # 不需要 apt hold，之后版本升级了也没事
+        rm -f /etc/apt/sources.list.d/old.binutils.list
+        apt-get update
+    else
+        echo -e "${bold}binutils' version is already le 2.30-22 ...${normal}"
+    fi
 }
 
 function _excute() {
-	($1 2>&1 | tee -a /log/r8168.log )
+	($1 2>&1 | tee -a $OutputLOG )
 }
 
 function rmmod_old_driver(){
@@ -221,38 +247,38 @@ function r8168_autorun() {
     fi
     echo
 
-    echo "Build the module and install"    | tee -a /log/r8168.log 
-    echo "-------------------------------" | tee -a /log/r8168.log 
-    echo "$(date "+%Y%m%d.%H%M")" | tee -a /log/r8168.log 
+    echo "Build the module and install"    | tee -a $OutputLOG 
+    echo "-------------------------------" | tee -a $OutputLOG 
+    echo "$(date "+%Y%m%d.%H%M")" | tee -a $OutputLOG 
     _excute "make $@ all"
     module=`ls src/*.ko`
     module=${module#src/}
     module=${module%.ko}
 
     if [ "$module" = "" ]; then
-    	echo "No driver exists!!!" | tee -a /log/r8168.log 
+    	echo "No driver exists!!!" | tee -a $OutputLOG 
     	exit 1
     elif [ "$module" != "r8169" ]; then
     	if test -e $TARGET_PATH/r8169.ko ; then
-    		echo "Backup r8169.ko" | tee -a /log/r8168.log 
+    		echo "Backup r8169.ko" | tee -a $OutputLOG 
     		if test -e $TARGET_PATH/r8169.bak ; then
     			i=0
     			while test -e $TARGET_PATH/r8169.bak$i
     			do
     				i=$(($i+1))
     			done
-    			echo "rename r8169.ko to r8169.bak$i" | tee -a /log/r8168.log 
+    			echo "rename r8169.ko to r8169.bak$i" | tee -a $OutputLOG 
     			_excute "mv $TARGET_PATH/r8169.ko $TARGET_PATH/r8169.bak$i"
     		else
-    			echo "rename r8169.ko to r8169.bak" | tee -a /log/r8168.log 
+    			echo "rename r8169.ko to r8169.bak" | tee -a $OutputLOG 
     			_excute "mv $TARGET_PATH/r8169.ko $TARGET_PATH/r8169.bak"
     		fi
     	fi
     fi
 
-    echo "DEPMOD $(uname -r)" | tee -a /log/r8168.log 
+    echo "DEPMOD $(uname -r)" | tee -a $OutputLOG 
     _excute "depmod $(uname -r)"
-    echo "load module $module" | tee -a /log/r8168.log 
+    echo "load module $module" | tee -a $OutputLOG 
     _excute "modprobe $module"
     
     echo "blacklist r8169" >> /etc/modprobe.d/blacklist.conf
@@ -273,15 +299,15 @@ function r8168_autorun() {
 
     if [ "$is_update_initramfs" = "y" ]; then
     	if which update-initramfs >/dev/null ; then
-    		echo "Updating initramfs. Please wait." | tee -a /log/r8168.log 
+    		echo "Updating initramfs. Please wait." | tee -a $OutputLOG 
     		_excute "update-initramfs -u -k $(uname -r)"
     	else
-    		echo "update-initramfs: command not found" | tee -a /log/r8168.log 
+    		echo "update-initramfs: command not found" | tee -a $OutputLOG 
     		exit 1
     	fi
     fi
 
-    echo "Completed." | tee -a /log/r8168.log 
+    echo "Completed." | tee -a $OutputLOG 
     exit 0
 }
 
