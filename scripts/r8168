@@ -5,7 +5,7 @@
 ####################################################################################################
 
 script_update=2020.06.18
-script_version=r21026
+script_version=r21027
 
 ####################################################################################################
 usage_guide() {
@@ -45,6 +45,7 @@ if [[ -n $wangka2 ]]; then
         interface=$wangka1
     else
         interface=$wangka2
+        interface_diff=yes
     fi
 else
     interface=$wangka1
@@ -63,15 +64,23 @@ function check_apps() {
 }
 
 function show_headers() {
-    echo -e "${bold}Kernel and headers installed in your system${yellow}"
+    echo -e "${bold}Kernel and headers installed in your system${blue}"
     echo $kernel
-    dpkg -l | grep linux-headers | grep $kernelvvv | awk '{print $2}'
+    echo -n "${yellow}"
+    dpkg -l | grep linux-image   | awk '{print $2}'
+    dpkg -l | grep linux-headers | awk '{print $2}'
     echo -e "${normal}"
+    dpkg -l | grep linux-headers | grep $kernelvvv -q || echo -e "${bold}${baihongse}Warning${jiacu} No match headers found${normal}"
 }
 
 function show_iface() {
     echo -e "${bold}The followings are details about your current interface${yellow}"
-    echo "Interface: $interface"
+    if [[ -n $interface_diff ]]; then
+        echo -e "Interface: $wangka1\nInterface: $wangka2"
+    else
+        echo -e "Interface: $wangka1"
+    fi
+    echo -e "${normal}${bold}ethtool -i $interfacee${yellow}"
     ethtool -i $interface
     echo -e "${normal}"
 }
@@ -133,7 +142,7 @@ function r8168_driver() {
 ####################################################################################################
 
 function r8168_dkms() {
-    for app in firmware-realtek dkms ; do
+    for app in dkms ; do
         dpkg -l | grep $app -q && apt-get purge -y $app
     done
 
