@@ -2,8 +2,8 @@
 # Author: Aniverse
 # https://github.com/Aniverse/aBox
 
-script_update=2020.05.09
-script_version=r10116
+script_update=2020.07.04
+script_version=r10117
 
 ########################################################################################################
 
@@ -37,10 +37,26 @@ done
 
 [[ -z $mode ]] && mode=usage
 
-[[ -z $iUser ]] && iUser=$(cat /log/inexistence/version | grep inexistence.user | awk '{print $NF}' | head -1)
-id -u $iUser >/dev/null 2>&1 || { echo -e "ERROR: User $iUser doesn't exist" ; exit 1 ; }
-[[ -z $iHome ]] && [[ $iUser == root ]] && iHome=/root
-[[ -z $iHome ]] && [[ $iUser != root ]] && iHome=/home/$iUser
+function export_inexistence_info() {
+    inexistence_ver=$( cat /log/inexistence/info/version.txt 2>/dev/null | grep inexistence.version  | awk '{print $NF}' | head -1)
+    inexistence_date=$(cat /log/inexistence/info/version.txt 2>/dev/null | grep inexistence.update   | awk '{print $NF}' | head -1)
+    asnnnnn=$(cat $LogBase/info/asn.txt 2>/dev/null)
+    serveripv4=$(cat $LogBase/info/serveripv4.txt 2>/dev/null)
+    serveripv6=$(cat $LogBase/info/serveripv6.txt 2>/dev/null)
+    [[ -f /log/inexistence/.lock/tweaks.lock ]] && tweaks_enabled=1
+
+    DefaultiUser=$(cat /log/inexistence/info/installed.user.list.txt 2>/dev/null | head -1)
+    [[ -z $iUser ]] && iUser=$DefaultiUser
+    iHome=$(eval echo "~$iUser")
+    passphrase=$(cat /root/.ssh/users/${iUser} 2>/dev/null)
+    passtext=$(cat /log/inexistence/users/${iUser}.info 2>/dev/null | cut -d: -f2)
+    if [[ "$CODENAME" =~ (jessie|xenial) ]]; then
+        iPass=$(echo ${passtext} | openssl enc -aes-128-ecb -a -d -pass pass:${passphrase} -nosalt 2>/dev/null)
+    else
+        iPass=$(echo ${passtext} | openssl enc -aes-128-ecb -pbkdf2 -a -d -pass pass:${passphrase} -nosalt 2>/dev/null)
+    fi
+}
+export_inexistence_info
 
 ########################################################################################################
 
@@ -73,8 +89,6 @@ lines() { printf "%-100s\n" "-" | sed 's/\s/-/g' ; }
 logs_rm_lock() { lines ; echo -e "$(date "+%Y-%m-%d %H:%M") ANIVERSE script DELETED $config/.config-lock" ; lines ; }
 logs_rm_lock_color() { echo -e "${on_red}${bold}$(date "+%Y-%m-%d %H:%M") ANIVERSE script DELETED $config/.config-lock${normal}" ; }
 logs_execute() { lines ; echo -e "${on_cyan}${bold}$(date "+%Y-%m-%d %H:%M") ANIVERSE script execute${normal}" ; lines ; }
-
-
 
 ########################################################################################################
 
