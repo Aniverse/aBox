@@ -2,8 +2,8 @@
 # Author: Aniverse
 # https://github.com/Aniverse/aBox
 
-script_update=2020.07.04
-script_version=r10117
+script_update=2020.07.11
+script_version=r10118
 
 ########################################################################################################
 
@@ -60,6 +60,9 @@ export_inexistence_info
 
 ########################################################################################################
 
+black=$(tput setaf 0)    ; red=$(tput setaf 1)          ; green=$(tput setaf 2)    ; yellow=$(tput setaf 3) ;  bold=$(tput bold)
+blue=$(tput setaf 4)     ; magenta=$(tput setaf 5)      ; cyan=$(tput setaf 6)     ; white=$(tput setaf 7)  ;  normal=$(tput sgr0)
+
 config=$iHome/.config/flexget
 config_file=$iHome/.config/flexget/config.yml
 config_flag="-c $config_file"
@@ -114,7 +117,7 @@ install_script() {
 }
 
 flexget_log() {
-    tail -800 $log
+    tail -1000 $log #| sed -r -e "s|(\b20[0-9:-]+ [0-9:]+\b) VERBOSE |${yellow}\1${normal}|g" -e "s/REJECTED/${red}REJECTED${normal}/g" -e "s/ACCEPTED/${red}ACCEPTED${normal}/g"
     echo -e "${bold}\ngrep -C100 23:33 $log\ngrep --color=never -C100 'DELETED $config/.config-lock' $log\n${normal}"
 }
 
@@ -131,12 +134,13 @@ log_backup_daily() {
 
 log_clean() {
     rm -rf $log_bak_path/*
+    rm -f  $config/flexget.*.log   $config/crash_report.*.log   config-*.bak
     echo -n > /log/script/check_flexget.log
 }
 
 flexget_execute() {
     logs_execute >> $log
-    /usr/bin/time -f "Time used: %e" -a -o $log "$flexget_cmd" $config_flag execute --no-cache 2>&1 >> $log
+    /usr/bin/time -f "Time used: %e" -a -o $log "$flexget_cmd" $config_flag execute --no-cache >> $log  2>&1
 }
 
 flexget_add2cron() {
