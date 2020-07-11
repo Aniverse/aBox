@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/aBox
 
 script_update=2020.07.11
-script_version=r10118
+script_version=r10119
 
 ########################################################################################################
 
@@ -91,7 +91,7 @@ on_red='\033[41;37m' ; on_cyan='\033[46;37m' ; heihuangse='\033[43;30m'
 lines() { printf "%-100s\n" "-" | sed 's/\s/-/g' ; }
 logs_rm_lock() { lines ; echo -e "$(date "+%Y-%m-%d %H:%M") ANIVERSE script DELETED $config/.config-lock" ; lines ; }
 logs_rm_lock_color() { echo -e "${on_red}${bold}$(date "+%Y-%m-%d %H:%M") ANIVERSE script DELETED $config/.config-lock${normal}" ; }
-logs_execute() { lines ; echo -e "${on_cyan}${bold}$(date "+%Y-%m-%d %H:%M") ANIVERSE script execute${normal}" ; lines ; }
+logs_execute() { lines ; echo -e "${on_cyan}${bold}$(date "+%Y-%m-%d %H:%M:%S") ANIVERSE script execute${normal}" ; lines ; }
 
 ########################################################################################################
 
@@ -140,7 +140,14 @@ log_clean() {
 
 flexget_execute() {
     logs_execute >> $log
-    /usr/bin/time -f "Time used: %e" -a -o $log "$flexget_cmd" $config_flag execute --no-cache >> $log  2>&1
+    # From FlexGet 3.1.7, log colors are stripped when redirecting output
+    # https://github.com/Flexget/Flexget/compare/v3.1.6...v3.1.7
+    # https://github.com/Flexget/Flexget/commit/6ead240174e1c95af4fcbf58e56e97bed569a777
+    # /usr/bin/time -f "Time used: %e" -a -o $log "$flexget_cmd" $config_flag execute --no-cache >> $log 2>&1
+
+    # So we use script to cap all input to logfile
+    # https://stackoverflow.com/questions/3515208/can-colorized-output-be-captured-via-shell-redirect
+    /usr/bin/time -f "Time used: %e" -a -o $log script --flush --quiet --command "$flexget_cmd $config_flag execute --no-cache" >> $log 2>&1
 }
 
 flexget_add2cron() {
