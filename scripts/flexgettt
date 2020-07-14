@@ -2,8 +2,8 @@
 # Author: Aniverse
 # https://github.com/Aniverse/aBox
 
-script_update=2020.07.11
-script_version=r10119
+script_update=2020.07.14
+script_version=r10120
 
 ########################################################################################################
 
@@ -38,6 +38,7 @@ done
 [[ -z $mode ]] && mode=usage
 
 function export_inexistence_info() {
+    CODENAME=$(cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"\|(\|)\|[0-9.,]\|version\|lts//g' | awk '{print $2}' | head -1)
     inexistence_ver=$( cat /log/inexistence/info/version.txt 2>/dev/null | grep inexistence.version  | awk '{print $NF}' | head -1)
     inexistence_date=$(cat /log/inexistence/info/version.txt 2>/dev/null | grep inexistence.update   | awk '{print $NF}' | head -1)
     asnnnnn=$(cat $LogBase/info/asn.txt 2>/dev/null)
@@ -59,9 +60,6 @@ function export_inexistence_info() {
 export_inexistence_info
 
 ########################################################################################################
-
-black=$(tput setaf 0)    ; red=$(tput setaf 1)          ; green=$(tput setaf 2)    ; yellow=$(tput setaf 3) ;  bold=$(tput bold)
-blue=$(tput setaf 4)     ; magenta=$(tput setaf 5)      ; cyan=$(tput setaf 6)     ; white=$(tput setaf 7)  ;  normal=$(tput sgr0)
 
 config=$iHome/.config/flexget
 config_file=$iHome/.config/flexget/config.yml
@@ -90,8 +88,8 @@ on_red='\033[41;37m' ; on_cyan='\033[46;37m' ; heihuangse='\033[43;30m'
 
 lines() { printf "%-100s\n" "-" | sed 's/\s/-/g' ; }
 logs_rm_lock() { lines ; echo -e "$(date "+%Y-%m-%d %H:%M") ANIVERSE script DELETED $config/.config-lock" ; lines ; }
-logs_rm_lock_color() { echo -e "${on_red}${bold}$(date "+%Y-%m-%d %H:%M") ANIVERSE script DELETED $config/.config-lock${normal}" ; }
-logs_execute() { lines ; echo -e "${on_cyan}${bold}$(date "+%Y-%m-%d %H:%M:%S") ANIVERSE script execute${normal}" ; lines ; }
+logs_rm_lock_color() { echo -e "${on_red}${bold}$(date "+%Y-%m-%d %H:%M:%S") ANIVERSE script DELETED $config/.config-lock${normal}" ; }
+logs_execute() { lines ; echo -e "\n\n\n${on_cyan}${bold}$(date "+%Y-%m-%d %H:%M:%S") ANIVERSE script execute${normal}" ; lines ; }
 
 ########################################################################################################
 
@@ -145,7 +143,7 @@ flexget_execute() {
     # https://github.com/Flexget/Flexget/commit/6ead240174e1c95af4fcbf58e56e97bed569a777
     # /usr/bin/time -f "Time used: %e" -a -o $log "$flexget_cmd" $config_flag execute --no-cache >> $log 2>&1
 
-    # So we use script to cap all input to logfile
+    # So we use script to cap all original output to logfile
     # https://stackoverflow.com/questions/3515208/can-colorized-output-be-captured-via-shell-redirect
     /usr/bin/time -f "Time used: %e" -a -o $log script --flush --quiet --command "$flexget_cmd $config_flag execute --no-cache" >> $log 2>&1
 }
