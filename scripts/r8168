@@ -4,8 +4,8 @@
 
 ####################################################################################################
 
-script_update=2020.06.18
-script_version=r22032
+script_update=2020.07.12
+script_version=r22033
 
 ####################################################################################################
 usage_guide() {
@@ -144,7 +144,9 @@ function r8168_driver() {
 
     apt_install_check     build-essential   libelf-dev
     apt_install_together
-    [[ $CODENAME == buster ]] && install_old_binutils
+    if [[ $CODENAME == buster ]] && ! version_ge $kernelvvv 4.15; then
+        install_old_binutils
+    fi
 
     rm -rf r8168-8.046.00.tar.bz2 r8168-8.046.00
     wget -O r8168-8.046.00.tar.bz2 https://github.com/Aniverse/inexistence-files/raw/master/firmware/r8168-8.046.00.tar.bz2
