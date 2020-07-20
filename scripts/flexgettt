@@ -2,8 +2,8 @@
 # Author: Aniverse
 # https://github.com/Aniverse/aBox
 
-script_update=2020.07.17
-script_version=r10121
+script_update=2020.07.20
+script_version=r10122
 
 ########################################################################################################
 
@@ -88,21 +88,23 @@ on_red='\033[41;37m' ; on_cyan='\033[46;37m' ; heihuangse='\033[43;30m'
 
 lines() { printf "%-100s\n" "-" | sed 's/\s/-/g' ; }
 logs_rm_lock() { echo -e "${on_red}${bold}$(date "+%Y-%m-%d %H:%M:%S") ANIVERSE script DELETED $config/.config-lock${normal}" ; }
-logs_rm_bak() { echo -e "${on_red}${bold}$(date "+%Y-%m-%d %H:%M:%S") ANIVERSE script DELETED $config/.config-lock${normal}" ; }
+logs_mv_bak () { echo -e "${on_red}${bold}$(date "+%Y-%m-%d %H:%M:%S") ANIVERSE script MOVE    $config/$bak${normal}" ; }
 logs_execute() { lines ; echo -e "\n\n\n${on_cyan}${bold}$(date "+%Y-%m-%d %H:%M:%S") ANIVERSE script execute${normal}" ; lines ; }
 
 ########################################################################################################
 
 #flexget_rm_lock
 if [[ -f $config/.config-lock ]]; then
-    rm -f $config/.config-lock 2>&1 >> $log
+    rm -f $config/.config-lock >> $log 2>&1
     logs_rm_lock >> $log
 fi
 
-#flexget_rm_lock
-if [[ -f $config/.config-lock ]]; then
-    rm -f $config/.config-lock 2>&1 >> $log
-    logs_rm_bak >> $log
+#flexget_mv_config_bak
+if ls $config | grep config.*bak -q ; then
+    mkdir -p $config/config_backup
+    mv -f $config/config*bak $config/config_backup >> $log 2>&1
+	bak=$(ls $config | grep config.*bak)
+    logs_mv_bak >> $log
 fi
 
 flexget_learn() { runuser -l $iUser -c "flexget execute --learn" ; }
