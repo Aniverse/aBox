@@ -2,8 +2,8 @@
 # Author: Aniverse
 # https://github.com/Aniverse/aBox
 
-script_update=2020.07.14
-script_version=r10120
+script_update=2020.07.17
+script_version=r10121
 
 ########################################################################################################
 
@@ -87,21 +87,26 @@ on_red='\033[41;37m' ; on_cyan='\033[46;37m' ; heihuangse='\033[43;30m'
 ########################################################################################################
 
 lines() { printf "%-100s\n" "-" | sed 's/\s/-/g' ; }
-logs_rm_lock() { lines ; echo -e "$(date "+%Y-%m-%d %H:%M") ANIVERSE script DELETED $config/.config-lock" ; lines ; }
-logs_rm_lock_color() { echo -e "${on_red}${bold}$(date "+%Y-%m-%d %H:%M:%S") ANIVERSE script DELETED $config/.config-lock${normal}" ; }
+logs_rm_lock() { echo -e "${on_red}${bold}$(date "+%Y-%m-%d %H:%M:%S") ANIVERSE script DELETED $config/.config-lock${normal}" ; }
+logs_rm_bak() { echo -e "${on_red}${bold}$(date "+%Y-%m-%d %H:%M:%S") ANIVERSE script DELETED $config/.config-lock${normal}" ; }
 logs_execute() { lines ; echo -e "\n\n\n${on_cyan}${bold}$(date "+%Y-%m-%d %H:%M:%S") ANIVERSE script execute${normal}" ; lines ; }
 
 ########################################################################################################
 
-#flexget_rm_lock() { 
-[[ -f $config/.config-lock ]] && {
+#flexget_rm_lock
+if [[ -f $config/.config-lock ]]; then
     rm -f $config/.config-lock 2>&1 >> $log
-    logs_rm_lock_color >> $log
-    logs_rm_lock >> $flexget_log
-}
+    logs_rm_lock >> $log
+fi
 
-flexget_learn() { flexget $config_flag execute --learn ; }
-flexget_test () { flexget $config_flag --test --loglevel debug execute ; }
+#flexget_rm_lock
+if [[ -f $config/.config-lock ]]; then
+    rm -f $config/.config-lock 2>&1 >> $log
+    logs_rm_bak >> $log
+fi
+
+flexget_learn() { runuser -l $iUser -c "flexget execute --learn" ; }
+flexget_test () { runuser -l $iUser -c "flexget --test --loglevel debug execute" ; }
 
 install_script() {
     if [[ $EUID == 0 ]]; then
@@ -134,6 +139,7 @@ log_clean() {
     rm -rf $log_bak_path/*
     rm -f  $config/flexget.*.log   $config/crash_report.*.log   config-*.bak
     echo -n > /log/script/check_flexget.log
+	echo "ll $config"
 }
 
 flexget_execute() {
@@ -145,7 +151,8 @@ flexget_execute() {
 
     # So we use script to cap all original output to logfile
     # https://stackoverflow.com/questions/3515208/can-colorized-output-be-captured-via-shell-redirect
-    /usr/bin/time -f "Time used: %e" -a -o $log script --flush --quiet --command "$flexget_cmd $config_flag execute --no-cache" >> $log 2>&1
+    # /usr/bin/time -f "Time used: %e" -a -o $log script --flush --quiet --command "$flexget_cmd $config_flag execute --no-cache" >> $log 2>&1
+	/usr/bin/time -f "Time used: %e" -a -o $log runuser -l $iUser -c "script --flush --quiet --command '$flexget_cmd execute --no-cache'" >> $log 2>&1
 }
 
 flexget_add2cron() {
