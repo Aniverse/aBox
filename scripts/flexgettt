@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/aBox
 
 script_update=2020.07.21
-script_version=r10123
+script_version=r10124
 
 ########################################################################################################
 
@@ -36,6 +36,7 @@ while true; do
 done
 
 [[ -z $mode ]] && mode=usage
+[[ $EUID != 0 ]] && echo -e "This script is designed for user with ROOT privilege" && exit 1
 
 function export_inexistence_info() {
     CODENAME=$(cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"\|(\|)\|[0-9.,]\|version\|lts//g' | awk '{print $2}' | head -1)
@@ -168,13 +169,13 @@ flexget_add2cron() {
             cronline2="0 0 * * * $S_Path --log-backup"
             (crontab -u $user -l ; echo "$cronline"  ) | crontab -u $user -
             (crontab -u $user -l ; echo "$cronline2" ) | crontab -u $user -
-            echo -e "\n${green}${bold}Flexget crontab enabled${normal}\n"
+            echo -e "\n${green}${bold}FlexGet crontab enabled${normal}\n"
         else
             echo -e "\n${bold}Nothing to do, exit${normal}\n"
         fi
     else
         interval2=$(crontab -u $user -l | grep -a "$S_Path" | grep -v "log-backup" | awk '{print $1}' | grep -oE "[0-9]+")
-        echo -e "${bold}Flexget RSS enabled, current interval is  ${heihuangse}$interval2${jiacu} minute(s)${normal}"
+        echo -e "${bold}FlexGet RSS enabled, current interval is  ${heihuangse}$interval2${jiacu} minute(s)${normal}"
         echo -e "${bold}Press enter to do nothing, 0 to disable Flexget, or other numbers to be wanted interval${normal}"
         echo -ne "${yellow}${bold}How many minutes of intervals would you like?${normal} " ; read -e interval
         if [[ $interval -gt 0 ]] ; then
@@ -193,7 +194,7 @@ flexget_add2cron() {
 
 show_usage() {
     echo "
-flexgettt $script_update $script_version
+flexgettt $script_version ($script_update)
 
 -n              flexget execute
 -c              Enable or Disable flexget cron
@@ -203,9 +204,8 @@ flexgettt $script_update $script_version
 --log-clean     rm -rf $log_bak_path/* && echo -n > /log/script/check_flexget.log
 --log-backup    cp -f /log/script/check_flexget.log $log_bak_path/$(date "+%Y-%m-%d").log
                 echo -n > /log/script/check_flexget.log
--s              search log $1, eg.
-                flexgettt -s 23:33
--u              specify user for flexget
+-s              search log <keywords>, eg. flexgettt -s 23:33
+-u              specify user for flexget, eg. flexgettt -u aniverse -n
 "
 }
 
