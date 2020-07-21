@@ -1,0 +1,36 @@
+#!/bin/bash
+# Author: Aniverse
+#
+script_update=2020.03.10
+script_version=r10000
+
+usage() {
+s=/usr/local/bin/syslog;rm -f $s;nano $s;chmod 755 $s
+syslog deluged
+syslog deluged -C5
+}
+
+################################################################################
+
+keyword=$1
+flags=$2
+
+if [[ -n $flags ]]; then
+    for log in $(ls /var/log | grep syslog); do
+        printf "%-50s\n" "-" | sed 's/\s/-/g' ; echo $log ; printf "%-50s\n" "-" | sed 's/\s/-/g'
+        if echo $log | grep -q gz; then
+            gunzip -c /var/log/$log | grep -i $keyword
+        else
+            grep -i $keyword /var/log/$log
+        fi
+    done
+else
+    for log in $(ls /var/log | grep syslog); do
+        printf "%-50s\n" "-" | sed 's/\s/-/g' ; echo $log ; printf "%-50s\n" "-" | sed 's/\s/-/g'
+        if echo $log | grep -q gz; then
+            gunzip -c /var/log/$log | eval grep -i $keyword "$flags"
+        else
+            eval grep -i $keyword /var/log/$log "$flags"
+        fi
+    done
+fi
