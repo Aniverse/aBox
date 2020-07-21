@@ -2,8 +2,8 @@
 # Author: Aniverse
 # https://github.com/Aniverse/aBox
 
-script_update=2020.07.20
-script_version=r10122
+script_update=2020.07.21
+script_version=r10123
 
 ########################################################################################################
 
@@ -154,7 +154,7 @@ flexget_execute() {
     # So we use script to cap all original output to logfile
     # https://stackoverflow.com/questions/3515208/can-colorized-output-be-captured-via-shell-redirect
     # /usr/bin/time -f "Time used: %e" -a -o $log script --flush --quiet --command "$flexget_cmd $config_flag execute --no-cache" >> $log 2>&1
-	/usr/bin/time -f "Time used: %e" -a -o $log runuser -l $iUser -c "script --flush --quiet --command '$flexget_cmd execute --no-cache'" >> $log 2>&1
+	/usr/bin/time -f "Time used: %e" -a -o $log /usr/sbin/runuser -l $iUser -c "script --flush --quiet --command '$flexget_cmd execute --no-cache'" >> $log 2>&1
 }
 
 flexget_add2cron() {
