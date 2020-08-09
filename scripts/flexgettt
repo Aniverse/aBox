@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/aBox
 
 script_update=2020.08.09
-script_version=r20128
+script_version=r20129
 
 ########################################################################################################
 
@@ -205,14 +205,16 @@ flexgettt $script_version ($script_update)
 
 -n              flexget execute
 -c              Enable or Disable flexget cron
--l              tail -500 $log
+-l              tail -1000 $log
+--ll            tail -f    $log
 -x              flexget execute --learn
 -t              flexget --test --loglevel debug execute
---log-clean     rm -rf $log_folder/* && echo -n > $log
+--log-clean     clean $log_folder/* and clean $log
 --log-backup    cp -f $log $log_folder/$(date "+%Y-%m-%d").log
                 echo -n > $log
--s              search log <keywords>, eg. flexgettt -s 23:33
--u              specify user for flexget, eg. flexgettt -u aniverse -n
+-s <keywords>   search log, eg. flexgettt -s 23:33
+-u              specify user for flexget running, eg. flexgettt -u aniverse -n
+
 "
 }
 
