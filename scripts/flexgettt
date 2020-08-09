@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/aBox
 
 script_update=2020.08.09
-script_version=r20129
+script_version=r20130
 
 ########################################################################################################
 
@@ -168,12 +168,12 @@ flexget_execute() {
 
 flexget_add2cron() {
     echo
-    cronline="*/$interval * * * * $S_Path -n"
     crontab -u $user -l 2>1 | grep -q "$S_Path" || NoCron=1
     
     if [[ $NoCron == 1 ]]; then
         echo -ne "${yellow}${bold}How many minutes of intervals would you like?${normal} " ; read -e interval
         if [[ $interval -gt 0 ]] ; then
+            cronline="*/$interval * * * * $S_Path -n"
             cronline2="0 0 * * * $S_Path --log-backup"
             ( crontab -u $user -l ; echo "$cronline"  ) | crontab -u $user -
             ( crontab -u $user -l ; echo "$cronline2" ) | crontab -u $user -
@@ -187,6 +187,7 @@ flexget_add2cron() {
         echo -e "${bold}Press enter to do nothing, 0 to disable Flexget, or other numbers to be wanted interval${normal}"
         echo -ne "${yellow}${bold}How many minutes of intervals would you like?${normal} " ; read -e interval
         if [[ $interval -gt 0 ]] ; then
+            cronline="*/$interval * * * * $S_Path -n"
             ( crontab -u $user -l | sed "/.*$S_Path_sed/"d ) | crontab -u $user -
             ( crontab -u $user -l ; echo "$cronline" ) | crontab -u $user -
             echo -e "\n${green}${bold}Changed interval to $interval${normal}\n"
