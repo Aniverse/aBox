@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/aBox
 
 script_update=2020.08.09
-script_version=r10125
+script_version=r10126
 
 ########################################################################################################
 
@@ -134,6 +134,8 @@ tail_f_log() {
 
 log_serach() {
     grep -i "$keyword" $log | head -100
+    echo ; lines ; echo
+    grep -i "$keyword" $(cat /log/script/flexgettt/lastlog.name) | head -100
     echo -e "\n${on_red}grep -C5 \"$keyword\" $log${normal}\n"
 }
 
@@ -141,6 +143,7 @@ log_backup_daily() {
     mkdir -p $log_bak_path
     cp -f /log/script/check_flexget.log $log_bak_path/$(date "+%Y-%m-%d").log
     echo -n > /log/script/check_flexget.log
+    echo -e "$log_bak_path/$(date "+%Y-%m-%d").log" > /log/script/flexgettt/lastlog.name
 }
 
 log_clean() {
