@@ -2,8 +2,8 @@
 # Author: Aniverse
 # https://github.com/Aniverse/aBox
 
-script_update=2020.07.21
-script_version=r10124
+script_update=2020.08.09
+script_version=r10125
 
 ########################################################################################################
 
@@ -14,7 +14,7 @@ rm -f /usr/local/bin/flexgettt ; nano /usr/local/bin/flexgettt ; chmod 755 /usr/
 
 ########################################################################################################
 
-OPTS=$(getopt -o nlcxtis:u: --long "install,normal,log,cron,learn,test,log-backup,log-clean,search:,user:" -- "$@")
+OPTS=$(getopt -o nlcxtis:u: --long "install,normal,log,cron,learn,test,log-backup,log-clean,search:,user:,ll" -- "$@")
 eval set -- "$OPTS"
 [ ! $? = 0 ] && { echo -e "Invalid option: $1" ; mode=usage ; }
 
@@ -23,6 +23,7 @@ while true; do
     -i  | --install   ) mode=install    ; shift ;;
     -n  | --normal    ) mode=normal     ; shift ;;
     -l  | --log       ) mode=show_log   ; shift ;;
+          --ll        ) mode=tail_f_log ; shift ;;
     -c  | --cron      ) mode=add2cron   ; shift ;;
     -x  | --learn     ) mode=fg_learn   ; shift ;;
     -t  | --test      ) mode=fg_test    ; shift ;;
@@ -127,6 +128,10 @@ flexget_log() {
     echo -e "${bold}\ngrep -C100 23:33 $log\ngrep --color=never -C100 'DELETED $config/.config-lock' $log\n${normal}"
 }
 
+tail_f_log() {
+    tail -f $log
+}
+
 log_serach() {
     grep -i "$keyword" $log | head -100
     echo -e "\n${on_red}grep -C5 \"$keyword\" $log${normal}\n"
@@ -220,4 +225,5 @@ case $mode in
     log_clean ) log_clean    ;;
     usage     ) show_usage   ;;
     log_search) log_serach   ;;
+    tail_f_log) tail_f_log   ;;
 esac
