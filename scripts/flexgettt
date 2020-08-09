@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/aBox
 
 script_update=2020.08.09
-script_version=r10126
+script_version=r10127
 
 ########################################################################################################
 
@@ -66,8 +66,8 @@ export_inexistence_info
 config=$iHome/.config/flexget
 config_file=$iHome/.config/flexget/config.yml
 config_flag="-c $config_file"
-log=/log/script/check_flexget.log
-log_bak_path=/log/script/flexgettt
+log=/log/script/flexget/0.log
+log_folder=/log/script/flexgettt
 flexget_log=$iHome/.config/flexget/flexget.log
 flexget_cmd=/usr/local/bin/flexget
 
@@ -81,7 +81,7 @@ black='\033[0;30m'   ; red='\033[0;31m' ; green='\033[0;32m' ; yellow='\033[0;33
 magenta='\033[0;35m' ; cyan='\033[0;36m'; white='\033[0;37m' ; normal='\033[0m'    ; bold='\033[1m'
 on_red='\033[41;37m' ; on_cyan='\033[46;37m' ; heihuangse='\033[43;30m'
 
-[[ ! -w "$log" ]] && { mkdir -p "$(dirname "$log")" ; touch "$log" ; chmod -R 777 "$(dirname "$log")" ; }
+[[ ! -w "$log" ]] && { mkdir -p "$(dirname "$log")" ; touch "$log" ; chmod -R 644 "$(dirname "$log")" ; }
 
 # split -b 65535000 -d -a 4 input ouptput_$(date "+%Y-%m-%d")
 # $(date "+%Y-%m-%d %H:%M")
@@ -140,16 +140,16 @@ log_serach() {
 }
 
 log_backup_daily() {
-    mkdir -p $log_bak_path
-    cp -f /log/script/check_flexget.log $log_bak_path/$(date "+%Y-%m-%d").log
-    echo -n > /log/script/check_flexget.log
-    echo -e "$log_bak_path/$(date "+%Y-%m-%d").log" > /log/script/flexgettt/lastlog.name
+    mkdir -p $log_folder
+    cp -f $log $log_folder/$(date "+%Y-%m-%d").log
+    echo -n > $log
+    echo -e "$log_folder/$(date "+%Y-%m-%d").log" > /log/script/flexgettt/lastlog.name
 }
 
 log_clean() {
-    rm -rf $log_bak_path/*
+    rm -rf $log_folder/*
     rm -f  $config/flexget.*.log   $config/crash_report.*.log   config-*.bak
-    echo -n > /log/script/check_flexget.log
+    echo -n > $log
 	echo "ll $config"
 }
 
@@ -209,9 +209,9 @@ flexgettt $script_version ($script_update)
 -l              tail -500 $log
 -x              flexget execute --learn
 -t              flexget --test --loglevel debug execute
---log-clean     rm -rf $log_bak_path/* && echo -n > /log/script/check_flexget.log
---log-backup    cp -f /log/script/check_flexget.log $log_bak_path/$(date "+%Y-%m-%d").log
-                echo -n > /log/script/check_flexget.log
+--log-clean     rm -rf $log_folder/* && echo -n > $log
+--log-backup    cp -f $log $log_folder/$(date "+%Y-%m-%d").log
+                echo -n > $log
 -s              search log <keywords>, eg. flexgettt -s 23:33
 -u              specify user for flexget, eg. flexgettt -u aniverse -n
 "
