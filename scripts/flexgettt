@@ -2,8 +2,8 @@
 # Author: Aniverse
 # https://github.com/Aniverse/aBox
 
-script_update=2020.08.09
-script_version=r20130
+script_update=2020.08.19
+script_version=r20131
 
 ########################################################################################################
 
@@ -14,7 +14,7 @@ usage_guide() {
 
 ########################################################################################################
 
-OPTS=$(getopt -o nlcxtis:u: --long "install,normal,log,cron,learn,test,log-backup,log-clean,search:,user:,ll" -- "$@")
+OPTS=$(getopt -o nlcxtis:u: --long "install,normal,log,cron,learn,test,log-backup,log-clean,search:,user:,ll,clean-db" -- "$@")
 eval set -- "$OPTS"
 [ ! $? = 0 ] && { echo -e "Invalid option: $1" ; mode=usage ; }
 
@@ -29,6 +29,7 @@ while true; do
     -t  | --test      ) mode=fg_test    ; shift ;;
     --log-backup      ) mode=log_bak    ; shift ;;
     --log-clean       ) mode=log_clean  ; shift ;;
+    --clean-db        ) mode=clean_db   ; shift ;;
     -s  | --search    ) keyword="$2" ; mode=log_search ; shift 2 ;;
     -u  | --user      ) iUser=$2        ; shift 2 ;;
 #   -- ) shift; break ;;
@@ -128,6 +129,11 @@ flexget_log() {
     echo -e "${bold}\ngrep -C100 23:33 $log\ngrep --color=never -C100 'DELETED $config/.config-lock' $log\n${normal}"
 }
 
+clean_db() {
+    rm -f $config/db-config.sqlite
+    runuser -l $iUser -c "flexget web passwd $iPass"
+}
+
 tail_f_log() {
     tail -f $log
 }
@@ -204,12 +210,14 @@ show_usage() {
     echo "
 flexgettt $script_version ($script_update)
 
+-i              install script
 -n              flexget execute
 -c              Enable or Disable flexget cron
 -l              tail -1000 $log
 --ll            tail -f    $log
 -x              flexget execute --learn
 -t              flexget --test --loglevel debug execute
+--clean-db      Clean database file, reset web password
 --log-clean     clean $log_folder/* and clean $log
 --log-backup    cp -f $log $log_folder/$(date "+%Y-%m-%d").log
                 echo -n > $log
@@ -220,15 +228,16 @@ flexgettt $script_version ($script_update)
 }
 
 case $mode in
-    install   ) install_script   ;;
-    normal    ) flexget_execute  ;;
-    show_log  ) flexget_log      ;;
-    add2cron  ) flexget_add2cron ;;
-    fg_test   ) flexget_test     ;;
-    fg_learn  ) flexget_learn    ;;
-    log_bak   ) log_backup_daily ;;
-    log_clean ) log_clean    ;;
-    usage     ) show_usage   ;;
-    log_search) log_serach   ;;
-    tail_f_log) tail_f_log   ;;
+    install     ) install_script   ;;
+    normal      ) flexget_execute  ;;
+    show_log    ) flexget_log      ;;
+    add2cron    ) flexget_add2cron ;;
+    fg_test     ) flexget_test     ;;
+    fg_learn    ) flexget_learn    ;;
+    log_bak     ) log_backup_daily ;;
+    log_clean   ) log_clean        ;;
+    usage       ) show_usage       ;;
+    log_search  ) log_serach       ;;
+    tail_f_log  ) tail_f_log       ;;
+    clean_db    ) clean_db         ;;
 esac
