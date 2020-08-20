@@ -2,8 +2,8 @@
 # Author: Aniverse
 # https://github.com/Aniverse/aBox
 
-script_update=2020.08.19
-script_version=r20131
+script_update=2020.08.20
+script_version=r21133
 
 ########################################################################################################
 
@@ -14,7 +14,7 @@ usage_guide() {
 
 ########################################################################################################
 
-OPTS=$(getopt -o nlcxtis:u: --long "install,normal,log,cron,learn,test,log-backup,log-clean,search:,user:,ll,clean-db" -- "$@")
+OPTS=$(getopt -o nlcxtis:u: --long "install,normal,log,cron,learn,test,log-backup,log-clean,search:,user:,ll,clean-db,edit,check,conf" -- "$@")
 eval set -- "$OPTS"
 [ ! $? = 0 ] && { echo -e "Invalid option: $1" ; mode=usage ; }
 
@@ -27,11 +27,14 @@ while true; do
     -c  | --cron      ) mode=add2cron   ; shift ;;
     -x  | --learn     ) mode=fg_learn   ; shift ;;
     -t  | --test      ) mode=fg_test    ; shift ;;
-    --log-backup      ) mode=log_bak    ; shift ;;
-    --log-clean       ) mode=log_clean  ; shift ;;
-    --clean-db        ) mode=clean_db   ; shift ;;
     -s  | --search    ) keyword="$2" ; mode=log_search ; shift 2 ;;
     -u  | --user      ) iUser=$2        ; shift 2 ;;
+          --log-backup) mode=log_bak    ; shift ;;
+          --log-clean ) mode=log_clean  ; shift ;;
+          --clean-db  ) mode=clean_db   ; shift ;;
+          --edit      ) mode=edit_conf  ; shift ;;
+          --check     ) mode=check      ; shift ;;
+          --conf      ) mode=show_conf  ; shift ;;
 #   -- ) shift; break ;;
     *  ) break ;;
   esac
@@ -172,6 +175,20 @@ flexget_execute() {
 	/usr/bin/time -f "Time used: %e" -a -o $log /usr/sbin/runuser -l $iUser -c "script --flush --quiet --command '$flexget_cmd execute --no-cache'" >> $log 2>&1
 }
 
+edit_conf() {
+    echo -n > $config_file
+    nano $config_file
+}
+
+show_conf() {
+    cat $config_file
+    echo -e "\n$config_file\n"
+}
+
+flexget_check() {
+    runuser -l $iUser -c "flexget check"
+}
+
 flexget_add2cron() {
     echo
     crontab -u $user -l 2>1 | grep -q "$S_Path" || NoCron=1
@@ -217,13 +234,16 @@ flexgettt $script_version ($script_update)
 --ll            tail -f    $log
 -x              flexget execute --learn
 -t              flexget --test --loglevel debug execute
+                echo -n > $log
+-s <keywords>   search log, eg. flexgettt -s 23:33
+-u              specify user for flexget running, eg. flexgettt -u $iUser -n
+
 --clean-db      Clean database file, reset web password
 --log-clean     clean $log_folder/* and clean $log
 --log-backup    cp -f $log $log_folder/$(date "+%Y-%m-%d").log
-                echo -n > $log
--s <keywords>   search log, eg. flexgettt -s 23:33
--u              specify user for flexget running, eg. flexgettt -u aniverse -n
-
+--edit          Clean $config_file and use nano to edit it
+--check         check $config_file
+--conf          Show $config_file
 "
 }
 
@@ -240,4 +260,7 @@ case $mode in
     log_search  ) log_serach       ;;
     tail_f_log  ) tail_f_log       ;;
     clean_db    ) clean_db         ;;
+    edit_conf   ) edit_conf        ;;
+    check       ) flexget_check    ;;
+    show_conf   ) show_conf        ;;
 esac
