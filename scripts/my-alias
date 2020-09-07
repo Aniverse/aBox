@@ -3,8 +3,8 @@
 # Author: Aniverse
 # https://github.com/Aniverse/aBox
 #########################################################################################################
-script_update=2020.03.16
-script_version=r11004
+script_update=2020.09.07
+script_version=r11005
 
 usage_guide() {
 rm -f 1 ; nano 1 ; source 1
@@ -43,13 +43,15 @@ CW="${bold}${baihongse} ERROR ${jiacu}";ZY="${baihongse}${bold} ATTENTION ${jiac
 setcolor
 
 function gggclone(){ git clone --depth=1 $1 && cd $(echo ${1##*/}) ;}
+function io_test() { (LANG=C dd if=/dev/zero of=test_$$ bs=64k count=16k conv=fdatasync && rm -f test_$$ ) 2>&1 | awk -F, '{io=$NF} END { print io}' | sed 's/^[ \t]*//;s/[ \t]*$//' ; }
+function iotest() { io1=$( io_test ) ; echo -e "\n${bold}硬盘 I/O (第一次测试) : ${yellow}$io1${normal}"
+io2=$( io_test ) ; echo -e "${bold}硬盘 I/O (第二次测试) : ${yellow}$io2${normal}" ; io3=$( io_test ) ; echo -e "${bold}硬盘 I/O (第三次测试) : ${yellow}$io3${normal}\n" ; }
 
 # Find a file with a pattern in name:
 function ff() { find . -type f -iname '*'"$*"'*' -ls ; }
 
 # Find a file with pattern $1 in name and Execute $2 on it:
-function fe() { find . -type f -iname '*'"${1:-}"'*' \
--exec ${2:-file} {} \;  ; }
+function fe() { find . -type f -iname '*'"${1:-}"'*' -exec ${2:-file} {} \;  ; }
 
 #  Find a pattern in a set of files and highlight them:
 #+ (needs a recent version of egrep).
@@ -76,26 +78,50 @@ xargs -0 egrep --color=always -sn ${case} "$1" 2>&- | more
 
 }
 
-function jieya()      # Handy Extract Program
-{
-    if [ -f $1 ] ; then
+function jieya() {
+    file=$1
+    delete=$2
+    if [ -f $file ] ; then
         case $1 in
-            *.tar.bz2)   tar xvjf $1     ;;
-            *.tar.gz)    tar xvzf $1     ;;
-            *.bz2)       bunzip2 $1      ;;
-            *.rar)       unrar x $1      ;;
-            *.gz)        gunzip $1       ;;
-            *.tar)       tar xvf $1      ;;
-            *.tbz2)      tar xvjf $1     ;;
-            *.tgz)       tar xvzf $1     ;;
-            *.zip)       unzip $1        ;;
-            *.Z)         uncompress $1   ;;
-            *.7z)        7z x $1         ;;
-            *)           echo "'$1' cannot be extracted via >jieya<" ;;
+            *.tar.bz2)   tar xvjf $1        ;;
+            *.tar.gz)    tar xvzf $1        ;;
+            *.tar.xz)    xz -d    $1         ;
+                         tar xvf ${file%.*} ;;
+            *.bz2)       bunzip2  $1        ;;
+            *.rar)       unrar x  $1        ;;
+            *.gz)        gunzip   $1        ;;
+            *.tar)       tar xvf  $1        ;;
+            *.tbz2)      tar xvjf $1        ;;
+            *.tgz)       tar xvzf $1        ;;
+            *.zip)       unzip $1           ;;
+            *.Z)         uncompress $1      ;;
+            *.7z)        7z x $1            ;;
+            *)           echo "'$1' cannot be extracted via jieya" ;;
         esac
+        [[ $delete == d ]] && rm -f $file ${file%.*}
     else
         echo "'$1' is not a valid file!"
     fi
+}
+
+function chaip() {
+    local ipv4=$1
+    echo $ipv4 | grep -qE '^[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?$' || { echo "Error: Not valid IPv4" ; exit 1 ; }
+    mkdir -p $HOME/.abench
+    wget --no-check-certificate -t1 -T6 -qO- https://ipapi.co/$ipv4/json > $HOME/.abench/ipapi 2>&1
+    ccoodde=$( cat $HOME/.abench/ipapi | grep \"country\"      | awk -F '"' '{print $4}' ) 2>/dev/null
+    country=$( cat $HOME/.abench/ipapi | grep \"country_name\" | awk -F '"' '{print $4}' ) 2>/dev/null
+    regionn=$( cat $HOME/.abench/ipapi | grep \"region\"       | awk -F '"' '{print $4}' ) 2>/dev/null
+    cityyyy=$( cat $HOME/.abench/ipapi | grep \"city\"         | awk -F '"' '{print $4}' ) 2>/dev/null
+    isppppp=$( cat $HOME/.abench/ipapi | grep \"org\"          | awk -F '"' '{print $4}' ) 2>/dev/null
+    asnnnnn=$( cat $HOME/.abench/ipapi | grep \"asn\"          | awk -F '"' '{print $4}' ) 2>/dev/null
+    [[ $cityyyy == Singapore ]] && unset cityyyy
+    [[ -z $isppppp ]] && isp="No ISP detected"
+    [[ -z $asnnnnn ]] && isp="No ASN detected"
+    rm -f $HOME/.abench/ipapi 2>&1
+    echo -e "$ipv4"
+    echo -e "$asnnnnn, $isppppp"
+    echo -e "$country, $regionn, $cityyyy"
 }
 
 
@@ -104,6 +130,27 @@ function make-tar() { tar cvzf "${1%%/}.tar.gz"  "${1%%/}/"; }
 
 # Create a ZIP archive of a file or folder.
 function make-zip() { zip -r "${1%%/}.zip" "$1" ; }
+
+function dabao() {
+    local target=$1
+    if [[ -d "$target" ]];then
+        folder_size=$(du -sB MiB $target | awk '{print $1}' | grep -oE "[0-9]+")
+        echo -e "\033[0;33m目标文件夹大小 $folder_size MiB\033[0m"
+        [[ $folder_size -ge 200 ]] && read -p "确定打包么？"
+        mkdir -p $HOME/tars
+        target_full_path=$(cd $target;pwd)
+        dirpath=$(dirname $target_full_path)
+        target=$(basename $target_full_path)
+        output=$target
+        echo $target | grep -qE "^." && output=$(echo $target | sed "s/\.//")
+        tarfile=$HOME/tars/$output.tar.gz
+        [[ -e $tarfile ]] && echo -ne "\033[0;31m同名压缩包已存在" && rm -f $tarfile && echo -e "，删除之\033[0m"
+        tar zcf $tarfile -C $dirpath $target && echo -ne "\033[0;32m打包后体积 " && du -sB KiB $tarfile | awk '{print $1}'
+        echo -e "\033[0;34msz $tarfile\033[0m\n"
+    else
+        echo "\033[0;31m不是文件夹\033[0m"
+    fi
+}
 
 # Make your directories and files access rights sane.
 function sanitize() { chmod -R u=rwX,g=rX,o= "$@" ;}
